@@ -67,6 +67,56 @@ function App() {
     fetch('/api/auth/me').then(r => r.json()).then(d => setUser(d.user || null)).catch(() => {})
   }, [])
 
+  // Global navigation event from NotificationBell (or any component that dispatches 'ddh-navigate')
+  // Link formats supported:
+  //   'admin#courses'   → go to admin panel + set tab hash
+  //   '/admin#inbox'    → same (leading slash tolerated)
+  //   'admin/activities/<id>' → admin panel + hash on activities tab
+  //   'course/<id>'     → teacher/dashboard depending on user role
+  //   '/some/path'      → hard nav via window.location
+  useEffect(() => {
+    const onNav = (e) => {
+      const link = e?.detail?.link
+      if (!link || typeof link !== 'string') return
+      // Normalize: strip leading slash for pattern matching
+      const raw = link.replace(/^\/+/, '')
+
+      // Absolute URL or a route we own → hard navigate
+      if (/^https?:\/\//i.test(link)) {
+        window.open(link, '_blank', 'noopener')
+        return
+      }
+
+      // Split path + hash
+      const [pathPart, hashPart] = raw.split('#')
+      const segs = pathPart.split('/').filter(Boolean)
+
+      // Determine target page + tab
+      if (segs[0] === 'admin') {
+        setPage('admin')
+        // Prefer explicit hash if provided, else use next segment as tab (e.g., admin/activities/<id> → tab=activities)
+        const tab = hashPart || segs[1] || 'inbox'
+        // Give the panel a chance to mount, then set hash
+        setTimeout(() => { window.location.hash = tab }, 50)
+      } else if (segs[0] === 'manager') {
+        setPage('manager')
+      } else if (segs[0] === 'teacher' || segs[0] === 'course') {
+        // Teachers go to their panel, students to their dashboard
+        setPage(user?.role === 'teacher' || user?.role === 'super_admin' ? 'teacher' : 'dashboard')
+      } else if (segs[0] === 'dashboard') {
+        setPage('dashboard')
+      } else if (link.startsWith('/')) {
+        window.location.href = link
+        return
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      setNavOpen(false)
+    }
+    window.addEventListener('ddh-navigate', onNav)
+    return () => window.removeEventListener('ddh-navigate', onNav)
+  }, [user])
+
   const goto = (p) => { setPage(p); setNavOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }
   const logout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
@@ -1021,6 +1071,22 @@ function StudentCourseView({ reg, lang, onClose }) {
 
 // ==================== ADMIN PANEL ====================
 function AdminPanel({ user }) {
+  const validTabs = ['inbox', 'stats', 'courses', 'jobs', 'users', 'assign', 'blog', 'activities', 'german', 'legal', 'logs', 'content', 'emails']
+  const [tab, setTab] = useState('inbox')
+  useEffect(() => {
+    // Read hash on mount + subscribe to hash changes (for deep-linking from notifications)
+    const readHash = () => {
+      const h = (typeof window !== 'undefined' ? window.location.hash.replace(/^#/, '') : '').toLowerCase()
+      if (validTabs.includes(h)) setTab(h)
+    }
+    readHash()
+    window.addEventListener('hashchange', readHash)
+    return () => window.removeEventListener('hashchange', readHash)
+  }, [])
+  const changeTab = (v) => {
+    setTab(v)
+    if (typeof window !== 'undefined') history.replaceState(null, '', `#${v}`)
+  }
   return (
     <section className="py-8 bg-gradient-to-br from-neutral-50 to-white min-h-screen" dir="rtl">
       <div className="container mx-auto px-4">
@@ -1028,7 +1094,7 @@ function AdminPanel({ user }) {
           <div><h1 className="text-3xl font-black flex items-center gap-2"><Shield className="w-8 h-8 text-[#CC0000]" />لوحة الإدارة العليا</h1><p className="text-neutral-600 text-sm mt-1">مرحباً {user.name} — صلاحيات كاملة</p></div>
           <Badge className="bg-[#CC0000] text-white text-base px-4 py-1.5"><Shield className="w-4 h-4 me-1.5" />Super Admin</Badge>
         </div>
-        <Tabs defaultValue="inbox">
+        <Tabs value={tab} onValueChange={changeTab}>
           <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-13 gap-2 mb-6 h-auto bg-transparent p-0">
             <TabsTrigger
               value="inbox"

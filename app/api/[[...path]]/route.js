@@ -583,6 +583,22 @@ async function handle(request, { params }) {
         await db.collection('notifications').updateMany({ userId: me.id, read: false }, { $set: { read: true } })
         return ok({ ok: true })
       }
+      // DELETE /api/notifications  → clear all notifications for this user
+      if (segs.length === 1 && method === 'DELETE') {
+        const r = await db.collection('notifications').deleteMany({ userId: me.id })
+        return ok({ ok: true, deleted: r.deletedCount })
+      }
+      // DELETE /api/notifications/read  → clear only READ notifications
+      if (segs[1] === 'read' && method === 'DELETE') {
+        const r = await db.collection('notifications').deleteMany({ userId: me.id, read: true })
+        return ok({ ok: true, deleted: r.deletedCount })
+      }
+      // DELETE /api/notifications/<id>  → delete single notification (own only)
+      if (segs[1] && method === 'DELETE') {
+        const r = await db.collection('notifications').deleteOne({ id: segs[1], userId: me.id })
+        return ok({ ok: true, deleted: r.deletedCount })
+      }
+      // POST /api/notifications/<id>  → mark single as read
       if (segs[1] && method === 'POST') {
         await db.collection('notifications').updateOne({ id: segs[1], userId: me.id }, { $set: { read: true } })
         return ok({ ok: true })
