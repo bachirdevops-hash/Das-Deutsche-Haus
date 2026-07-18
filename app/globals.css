@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ddh-black: #1A1A1A;
+  --ddh-red: #CC0000;
+  --ddh-gold: #FFCE00;
+  --ddh-bg: #FAFAF8;
+  --ddh-blue: #2C5F9E;
+}
+
+html[dir='rtl'] body { font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; }
+html[dir='ltr'] body { font-family: 'Inter', system-ui, sans-serif; }
+
+h1, h2, h3, .font-display { font-family: 'Playfair Display', 'IBM Plex Sans Arabic', serif; letter-spacing: -0.02em; }
+html[dir='rtl'] h1, html[dir='rtl'] h2, html[dir='rtl'] h3 { font-family: 'IBM Plex Sans Arabic', 'Playfair Display', sans-serif; }
+
+@layer base {
+  * { border-color: rgb(229 229 229); }
+  body { background: var(--ddh-bg); color: var(--ddh-black); }
+}
+
+.flag-gradient { background: linear-gradient(180deg, #1A1A1A 0%, #1A1A1A 33%, #CC0000 33%, #CC0000 66%, #FFCE00 66%, #FFCE00 100%); }
+.flag-gradient-h { background: linear-gradient(90deg, #1A1A1A 0%, #1A1A1A 33%, #CC0000 33%, #CC0000 66%, #FFCE00 66%, #FFCE00 100%); }
+
+.btn-primary { background: #CC0000; color: white; transition: all .2s; }
+.btn-primary:hover { background: #A30000; transform: translateY(-1px); box-shadow: 0 8px 20px rgba(204,0,0,.25); }
+.btn-gold { background: #FFCE00; color: #1A1A1A; transition: all .2s; }
+.btn-gold:hover { background: #E6B800; transform: translateY(-1px); box-shadow: 0 8px 20px rgba(255,206,0,.35); }
+
+.hero-overlay { background: linear-gradient(135deg, rgba(26,26,26,.85) 0%, rgba(26,26,26,.55) 50%, rgba(204,0,0,.45) 100%); }
+
+.shimmer { background: linear-gradient(90deg, transparent, rgba(255,206,0,.15), transparent); background-size: 200% 100%; animation: shimmer 2.5s infinite; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+.fade-in { animation: fadeIn .5s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+.card-hover { transition: all .3s; }
+.card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,.08); }

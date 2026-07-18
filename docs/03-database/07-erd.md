@@ -1,0 +1,61 @@
+# 🔗 Entity Relationship Diagram (ASCII)
+
+```
+┌─────────────────┐         ┌────────────────┐
+│     USERS        │         │ PASSWORD_RESETS  │
+│ id PK            │◄───────◦ userId FK        │
+│ email ↑unique    │         │ token ↑unique    │
+│ role             │         └────────────────┘
+│ assignedCourses┌───────┐
+└─────────────│───────┘
+      │ 1               │ N
+      ▼                 ▼
+┌─────────────────┐   ┌──────────────────────┐
+│  NOTIFICATIONS   │   │  COURSE_REGISTRATIONS  │
+│ id PK            │   │ id PK                  │
+│ userId FK        │   │ userId FK ∥ null       │
+│ kind             │   │ courseId FK            │───► COURSES
+│ read             │   │ assignedUserId FK∥null │
+└─────────────────┘   │ status                 │
+                       └──────────────────────┘
+
+┌────────────────┐   ┌────────────────┐   ┌───────────────────┐
+│   TELC_EXAMS     │   │  TELC_BOOKINGS   │   │ VOCATIONAL_JOBS    │
+│ id PK            │◄──│ examId FK        │   │ id PK              │
+└────────────────┘   └────────────────┘   └───────────────────┘
+                                                  ▲
+                                                  │ N
+                                       ┌─────────────────────────┐
+                                       │ VOCATIONAL_APPLICATIONS │
+                                       │ jobId FK                │
+                                       └─────────────────────────┘
+
+┌─────────────────┐  ┌─────────────────────┐  ┌───────────────┐
+│   ACTIVITIES      │  │ ACTIVITY_REGISTRATIONS│  │  BLOG_POSTS    │
+│ id PK             │◄─│ activityId FK         │  │ slug ↑unique   │
+│ slug ↑unique      │  │ attendees             │  │ status         │
+│ registeredCount   │  └─────────────────────┘  └───────────────┘
+└─────────────────┘
+
+┌────────────────┐  ┌─────────────────┐  ┌───────────────┐
+│ SITE_CONTENT     │  │  TEAM_MEMBERS    │  │ PARTNERSHIPS   │
+│ key PK           │  │ id PK            │  │ id PK          │
+│ data (free-form) │  │ published        │  │ logo (URL)     │
+└────────────────┘  └─────────────────┘  └───────────────┘
+
+┌────────────────┐  ┌───────────────┐  ┌──────────────────┐
+│   VISA_TYPES     │  │  VISA_FAQS    │  │ CONSULTATION_TYPES│
+└────────────────┘  └───────────────┘  └──────────────────┘
+```
+
+## Cardinality Matrix
+
+| From | → | To | Type |
+|------|---|----|------|
+| users | 1→N | course_registrations | optional |
+| users | 1→N | telc_bookings | optional |
+| users | 1→N | notifications | required |
+| courses | 1→N | course_registrations | required |
+| telc_exams | 1→N | telc_bookings | required |
+| activities | 1→N | activity_registrations | required |
+| activities | 0→N | (no FK to user) | anonymous bookings allowed |
