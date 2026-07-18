@@ -859,9 +859,41 @@ async function handle(request, { params }) {
           return ok({ ok: true })
         }
       }
-      if (segs[1] === 'activity-logs' && method === 'GET') {
-        const logs = await db.collection('activity_logs').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).limit(500).toArray()
-        return ok({ logs })
+      if (segs[1] === 'activity-logs') {
+        // GET /api/admin/activity-logs?search=&action=&days=
+        if (segs.length === 2 && method === 'GET') {
+          const url = new URL(request.url)
+          const search = url.searchParams.get('search')
+          const action = url.searchParams.get('action')
+          const query = {}
+          if (search) query.userName = { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' }
+          if (action) query.action = { $regex: action.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' }
+          const [logs, total] = await Promise.all([
+            db.collection('activity_logs').find(query, { projection: { _id: 0 } }).sort({ createdAt: -1 }).limit(500).toArray(),
+            db.collection('activity_logs').countDocuments(query),
+          ])
+          return ok({ logs, total })
+        }
+        // DELETE /api/admin/activity-logs/<id>  → delete single log
+        if (segs.length === 3 && method === 'DELETE' && segs[2] !== 'clear' && segs[2] !== 'older-than') {
+          const r = await db.collection('activity_logs').deleteOne({ id: segs[2] })
+          return ok({ ok: true, deleted: r.deletedCount })
+        }
+        // POST /api/admin/activity-logs/clear  → wipe all logs
+        if (segs.length === 3 && segs[2] === 'clear' && method === 'POST') {
+          const r = await db.collection('activity_logs').deleteMany({})
+          await logActivity(db, me, 'activity_logs.clear', 'activity_logs', null, { deleted: r.deletedCount }, ip)
+          return ok({ ok: true, deleted: r.deletedCount })
+        }
+        // POST /api/admin/activity-logs/older-than  { days: 30 }  → delete logs older than X days
+        if (segs.length === 3 && segs[2] === 'older-than' && method === 'POST') {
+          const { days } = await request.json()
+          const daysNum = Math.max(1, Math.min(365, Number(days) || 30))
+          const cutoff = new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000).toISOString()
+          const r = await db.collection('activity_logs').deleteMany({ createdAt: { $lt: cutoff } })
+          await logActivity(db, me, 'activity_logs.purge', 'activity_logs', null, { deleted: r.deletedCount, olderThanDays: daysNum }, ip)
+          return ok({ ok: true, deleted: r.deletedCount, olderThanDays: daysNum })
+        }
       }
       // ===== EMAIL LOGS — admin monitoring =====
       if (segs[1] === 'email-logs') {

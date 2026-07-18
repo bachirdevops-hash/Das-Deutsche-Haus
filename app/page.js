@@ -1429,23 +1429,183 @@ function AdminAssignTeachers() {
 
 function AdminActivityLogs() {
   const [logs, setLogs] = useState([])
+  const [total, setTotal] = useState(0)
   const [filter, setFilter] = useState({ user: '', action: '' })
-  useEffect(() => { fetch('/api/admin/activity-logs').then(r => r.json()).then(d => setLogs(d.logs || [])) }, [])
-  const filtered = logs.filter(l => (!filter.user || l.actorName?.includes(filter.user) || l.actorRole?.includes(filter.user)) && (!filter.action || l.action?.includes(filter.action)))
+  const [busy, setBusy] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
+  const [confirmPurge, setConfirmPurge] = useState(false)
+  const [purgeDays, setPurgeDays] = useState(30)
+
+  const refresh = useCallback(() => {
+    fetch('/api/admin/activity-logs')
+      .then(r => r.json())
+      .then(d => { setLogs(d.logs || []); setTotal(d.total ?? (d.logs || []).length) })
+  }, [])
+  useEffect(() => { refresh() }, [refresh])
+
+  const filtered = logs.filter(l =>
+    (!filter.user || l.actorName?.toLowerCase().includes(filter.user.toLowerCase()) || l.actorRole?.toLowerCase().includes(filter.user.toLowerCase())) &&
+    (!filter.action || l.action?.toLowerCase().includes(filter.action.toLowerCase()))
+  )
+
+  const deleteSingle = async (l) => {
+    if (!l?.id) { toast.error('لا يمكن حذف هذا السجل (يفتقد المُعرِّف)'); return }
+    setBusy(true)
+    try {
+      const r = await fetch(`/api/admin/activity-logs/${l.id}`, { method: 'DELETE' })
+      const d = await r.json()
+      if (d.ok) { toast.success('تم الحذف'); refresh() } else toast.error(d.error || 'فشل الحذف')
+    } finally { setBusy(false) }
+  }
+
+  const clearAll = async () => {
+    setBusy(true)
+    try {
+      const r = await fetch('/api/admin/activity-logs/clear', { method: 'POST' })
+      const d = await r.json()
+      if (d.ok) { toast.success(`تم حذف ${d.deleted} سجل ✓`); refresh() } else toast.error('فشل الحذف')
+    } catch { toast.error('حدث خطأ') } finally { setBusy(false); setConfirmClear(false) }
+  }
+
+  const purgeOld = async () => {
+    setBusy(true)
+    try {
+      const r = await fetch('/api/admin/activity-logs/older-than', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ days: purgeDays }),
+      })
+      const d = await r.json()
+      if (d.ok) { toast.success(`تم حذف ${d.deleted} سجل أقدم من ${d.olderThanDays} يوم ✓`); refresh() } else toast.error('فشل الحذف')
+    } catch { toast.error('حدث خطأ') } finally { setBusy(false); setConfirmPurge(false) }
+  }
+
   return (<>
-    <h3 className="text-xl font-black mb-4 flex items-center gap-2"><Activity className="w-5 h-5 text-[#CC0000]" />سجل النشاط ({filtered.length})</h3>
-    <div className="flex gap-3 mb-4 flex-wrap"><Input placeholder="فلترة بالمستخدم..." value={filter.user} onChange={e => setFilter({ ...filter, user: e.target.value })} className="max-w-xs" /><Input placeholder="فلترة بالعملية..." value={filter.action} onChange={e => setFilter({ ...filter, action: e.target.value })} className="max-w-xs" /></div>
-    <Card><CardContent className="p-0"><div className="overflow-x-auto"><table className="w-full text-sm">
-      <thead className="bg-neutral-50 border-b sticky top-0"><tr><th className="text-start p-3 font-bold">التوقيت</th><th className="text-start p-3 font-bold">المستخدم</th><th className="text-start p-3 font-bold">الدور</th><th className="text-start p-3 font-bold">العملية</th><th className="text-start p-3 font-bold">العنصر</th><th className="text-start p-3 font-bold">IP</th></tr></thead>
-      <tbody>{filtered.map(l => (<tr key={l.id} className="border-b hover:bg-neutral-50">
-        <td className="p-3 text-neutral-600 text-xs">{new Date(l.createdAt).toLocaleString('ar')}</td>
-        <td className="p-3 font-semibold">{l.actorName}</td>
-        <td className="p-3"><Badge variant="outline" className="text-xs">{l.actorRole}</Badge></td>
-        <td className="p-3"><Badge className="bg-[#2C5F9E] text-white text-xs">{l.action}</Badge></td>
-        <td className="p-3 text-neutral-600">{l.entity}</td>
-        <td className="p-3 text-xs text-neutral-400">{l.ip || '-'}</td>
-      </tr>))}</tbody>
-    </table></div></CardContent></Card>
+    <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3 mb-4">
+      <div>
+        <h3 className="text-xl font-black flex items-center gap-2">
+          <Activity className="w-5 h-5 text-[#CC0000]" />سجل النشاط ({filtered.length}{total > logs.length && ` / إجمالي ${total}`})
+        </h3>
+        <p className="text-[12.5px] text-neutral-500 mt-1">لتخفيف الحمل على قاعدة البيانات، احذف السجلات القديمة دورياً.</p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" onClick={refresh} disabled={busy}>
+          <RefreshCw className={`w-3.5 h-3.5 me-1.5 ${busy ? 'animate-spin' : ''}`} />تحديث
+        </Button>
+        <Button variant="outline" size="sm" className="border-amber-400 text-amber-700 hover:bg-amber-50" onClick={() => setConfirmPurge(true)} disabled={busy || logs.length === 0}>
+          <Clock className="w-3.5 h-3.5 me-1.5" />حذف السجلات القديمة
+        </Button>
+        <Button variant="destructive" size="sm" onClick={() => setConfirmClear(true)} disabled={busy || logs.length === 0}>
+          <Trash2 className="w-3.5 h-3.5 me-1.5" />حذف الكل
+        </Button>
+      </div>
+    </div>
+
+    <div className="flex gap-3 mb-4 flex-wrap">
+      <Input placeholder="🔍 فلترة بالمستخدم..." value={filter.user} onChange={e => setFilter({ ...filter, user: e.target.value })} className="max-w-xs" />
+      <Input placeholder="🔍 فلترة بالعملية..." value={filter.action} onChange={e => setFilter({ ...filter, action: e.target.value })} className="max-w-xs" />
+    </div>
+
+    {filtered.length === 0 ? (
+      <Card><CardContent className="p-10 text-center text-neutral-500">
+        <Activity className="w-12 h-12 mx-auto mb-3 text-neutral-300" />
+        <p className="font-bold">{logs.length === 0 ? 'لا توجد سجلات نشاط' : 'لا نتائج مطابقة للفلتر'}</p>
+      </CardContent></Card>
+    ) : (
+      <Card><CardContent className="p-0"><div className="overflow-x-auto"><table className="w-full text-sm min-w-[720px]">
+        <thead className="bg-neutral-50 border-b"><tr>
+          <th className="text-start p-3 font-bold">التوقيت</th>
+          <th className="text-start p-3 font-bold">المستخدم</th>
+          <th className="text-start p-3 font-bold">الدور</th>
+          <th className="text-start p-3 font-bold">العملية</th>
+          <th className="text-start p-3 font-bold">العنصر</th>
+          <th className="text-start p-3 font-bold">IP</th>
+          <th className="text-start p-3 font-bold w-16">⚙️</th>
+        </tr></thead>
+        <tbody>{filtered.map(l => (
+          <tr key={l.id || `${l.createdAt}-${l.action}`} className="border-b hover:bg-neutral-50">
+            <td className="p-3 text-neutral-600 text-xs whitespace-nowrap">{new Date(l.createdAt).toLocaleString('ar')}</td>
+            <td className="p-3 font-semibold">{l.actorName || '—'}</td>
+            <td className="p-3"><Badge variant="outline" className="text-xs">{l.actorRole || '—'}</Badge></td>
+            <td className="p-3"><Badge className="bg-[#2C5F9E] text-white text-xs">{l.action}</Badge></td>
+            <td className="p-3 text-neutral-600 text-xs">{l.entity || '—'}</td>
+            <td className="p-3 text-xs text-neutral-400">{l.ip || '—'}</td>
+            <td className="p-3">
+              <Button size="sm" variant="outline" className="h-7 w-7 p-0 text-red-600 hover:bg-red-50" onClick={() => deleteSingle(l)} title="حذف هذا السجل" disabled={busy || !l.id}>
+                <Trash2 className="w-3 h-3" />
+              </Button>
+            </td>
+          </tr>
+        ))}</tbody>
+      </table></div></CardContent></Card>
+    )}
+
+    {/* Confirm: Clear All */}
+    {confirmClear && (
+      <Dialog open={true} onOpenChange={(o) => !o && setConfirmClear(false)}>
+        <DialogContent dir="rtl" className="max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />⚠️ تأكيد حذف جميع السجلات
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p>هل أنت متأكد من حذف <strong>جميع الـ {total} سجل</strong>؟</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-[12.5px] text-red-800">
+              ⛔ <strong>هذه العملية لا يمكن التراجع عنها.</strong><br />
+              سيتم حذف كل سجل نشاط في قاعدة البيانات نهائياً.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmClear(false)} disabled={busy}>إلغاء</Button>
+            <Button variant="destructive" onClick={clearAll} disabled={busy}>
+              {busy ? <><RefreshCw className="w-4 h-4 me-1.5 animate-spin" />جاري الحذف...</> : <><Trash2 className="w-4 h-4 me-1.5" />نعم، احذف الكل</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )}
+
+    {/* Confirm: Purge Old (older than X days) */}
+    {confirmPurge && (
+      <Dialog open={true} onOpenChange={(o) => !o && setConfirmPurge(false)}>
+        <DialogContent dir="rtl" className="max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-700">
+              <Clock className="w-5 h-5" />🧹 تنظيف السجلات القديمة
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-[13.5px]">احذف السجلات الأقدم من عدد معيّن من الأيام لتخفيف حمل قاعدة البيانات.</p>
+            <div>
+              <Label className="mb-2 block">عدد الأيام (1 - 365)</Label>
+              <div className="grid grid-cols-4 gap-2 mb-2">
+                {[7, 30, 60, 90].map(d => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setPurgeDays(d)}
+                    className={`p-2 rounded-lg border-2 text-sm font-bold transition ${purgeDays === d ? 'border-[#CC0000] bg-red-50 text-[#CC0000]' : 'border-neutral-200 hover:border-neutral-300'}`}
+                  >
+                    {d} يوم
+                  </button>
+                ))}
+              </div>
+              <Input type="number" min={1} max={365} value={purgeDays} onChange={e => setPurgeDays(Number(e.target.value) || 30)} />
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-[12.5px] text-amber-800">
+              ℹ️ ستُحذف كل السجلات التي أُنشئت قبل <strong>{purgeDays} يوم</strong> من الآن. السجلات الأحدث ستبقى.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmPurge(false)} disabled={busy}>إلغاء</Button>
+            <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={purgeOld} disabled={busy}>
+              {busy ? <><RefreshCw className="w-4 h-4 me-1.5 animate-spin" />جاري الحذف...</> : <><Clock className="w-4 h-4 me-1.5" />ابدأ التنظيف</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )}
   </>)
 }
 
