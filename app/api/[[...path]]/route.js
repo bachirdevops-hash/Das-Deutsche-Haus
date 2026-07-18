@@ -391,15 +391,15 @@ async function handle(request, { params }) {
 
     // ===== PUBLIC =====
     if (path === 'courses' && method === 'GET') {
-      const items = await db.collection('courses').find({}, { projection: { _id: 0 } }).sort({ level: 1 }).toArray()
+      const items = await db.collection('courses').find({}, { projection: { _id: 0 } }).sort({ level: 1 }).limit(100).toArray()
       return ok({ courses: items })
     }
     if (path === 'telc-exams' && method === 'GET') {
-      const items = await db.collection('telc_exams').find({}, { projection: { _id: 0 } }).sort({ date: 1 }).toArray()
+      const items = await db.collection('telc_exams').find({}, { projection: { _id: 0 } }).sort({ date: 1 }).limit(100).toArray()
       return ok({ exams: items })
     }
     if (path === 'vocational/jobs' && method === 'GET') {
-      const items = await db.collection('vocational_jobs').find({}, { projection: { _id: 0 } }).toArray()
+      const items = await db.collection('vocational_jobs').find({}, { projection: { _id: 0 } }).limit(100).toArray()
       return ok({ jobs: items })
     }
 
@@ -782,7 +782,7 @@ async function handle(request, { params }) {
 
       if (segs[1] === 'users') {
         if (segs.length === 2 && method === 'GET') {
-          const users = await db.collection('users').find({}, { projection: { _id: 0, password: 0 } }).sort({ createdAt: -1 }).toArray()
+          const users = await db.collection('users').find({}, { projection: { _id: 0, password: 0 } }).sort({ createdAt: -1 }).limit(1000).toArray()
           return ok({ users })
         }
         if (segs.length === 2 && method === 'POST') {
@@ -1001,10 +1001,11 @@ async function handle(request, { params }) {
         }
       }
       if (segs[1] === 'stats' && method === 'GET') {
+        // Use projection to fetch only needed fields (price_usd) — reduces memory footprint
         const [users, regs, books, apps, cons, contacts] = await Promise.all([
           db.collection('users').countDocuments(),
-          db.collection('course_registrations').find({}, { projection: { _id: 0 } }).toArray(),
-          db.collection('telc_bookings').find({}, { projection: { _id: 0 } }).toArray(),
+          db.collection('course_registrations').find({}, { projection: { _id: 0, price_usd: 1 } }).limit(10000).toArray(),
+          db.collection('telc_bookings').find({}, { projection: { _id: 0, price_usd: 1 } }).limit(10000).toArray(),
           db.collection('vocational_applications').countDocuments(),
           db.collection('travel_consultations').countDocuments(),
           db.collection('contact_messages').countDocuments(),
