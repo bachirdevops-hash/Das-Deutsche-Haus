@@ -77,6 +77,19 @@ agenthub/agents/youtube/db
 
 memory/test_credentials.md
 
+# Vercel
+.vercel
+
+# Test artifacts
+tests/*.log
+tests/__pycache__/
+test_reports/
+
+# Local backup files
+*.bak
+*.tmp
+*.swp
+
 # Mobile development
 android-sdk/node_modules/@next/swc-linux-arm64-gnu/next-swc.linux-arm64-gnu.node
 node_modules/@next/swc-linux-arm64-musl/next-swc.linux-arm64-musl.node

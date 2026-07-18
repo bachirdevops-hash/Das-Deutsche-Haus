@@ -1,0 +1,10 @@
+# Handled dynamically by /app/robots.js — this static file is a fallback
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin
+Disallow: /manager
+Disallow: /teacher
+Disallow: /dashboard
+
+Sitemap: /sitemap.xml

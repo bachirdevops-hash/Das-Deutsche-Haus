@@ -309,7 +309,9 @@ async function handle(request, { params }) {
           </div>`
         const result = await emailPasswordReset(db, { name: user.name, email: user.email, resetUrl })
         await logActivity(db, user, 'forgot_password', 'user', user.id, { emailSent: !result.error, skipped: result.skipped || false }, ip)
-        if (result.skipped) console.log('[DEV] Reset URL (no RESEND_API_KEY):', resetUrl)
+        if (result.skipped && process.env.NODE_ENV !== 'production') {
+          console.warn('[DEV] Reset URL (email skipped):', resetUrl)
+        }
       }
       return ok({ ok: true, message: 'إذا كان البريد مسجلاً، ستصلك رسالة إعادة تعيين خلال دقائق.' })
     }
