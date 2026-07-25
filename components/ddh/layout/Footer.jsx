@@ -2,7 +2,9 @@
 import { MapPin, Phone, Mail } from 'lucide-react'
 import { LOGO_URL } from '@/lib/constants'
 
-export function Footer({ t, lang, goto }) {
+export function Footer({ t, lang, goto, flags = {} }) {
+  const telcEnabled = flags.telc !== false
+  const quickLinks = ['home', 'courses', ...(telcEnabled ? ['telc'] : []), 'vocational', 'travel']
   return (
     <footer className="bg-[#1A1A1A] text-white mt-20"><div className="h-1 flag-gradient-h" />
       <div className="container mx-auto px-4 py-12 grid md:grid-cols-4 gap-8">
@@ -12,7 +14,7 @@ export function Footer({ t, lang, goto }) {
         </div>
         <div>
           <h4 className="font-bold mb-3">{lang === 'ar' ? 'روابط سريعة' : 'Schnelllinks'}</h4>
-          <ul className="space-y-2 text-sm text-white/70">{['home', 'courses', 'telc', 'vocational', 'travel'].map(p => <li key={p}><button onClick={() => goto(p)} className="hover:text-[#FFCE00]">{t.nav[p]}</button></li>)}</ul>
+          <ul className="space-y-2 text-sm text-white/70">{quickLinks.map(p => <li key={p}><button onClick={() => goto(p)} className="hover:text-[#FFCE00]">{t.nav[p]}</button></li>)}</ul>
         </div>
         <div>
           <h4 className="font-bold mb-3">{lang === 'ar' ? 'المعهد' : 'Institut'}</h4>

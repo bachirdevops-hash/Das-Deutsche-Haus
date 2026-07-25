@@ -4,11 +4,13 @@ import { Globe, Menu, X, ChevronDown, LogOut, LayoutDashboard, ShieldCheck, Shie
 import { LOGO_URL } from '@/lib/constants'
 import { NotificationBell } from '@/components/ddh/layout/NotificationBell'
 
-export function Header({ t, lang, setLang, page, goto, user, navOpen, setNavOpen, setAuthMode, logout }) {
+export function Header({ t, lang, setLang, page, goto, user, navOpen, setNavOpen, setAuthMode, logout, flags = {} }) {
   const isAr = lang === 'ar'
   const [openMenu, setOpenMenu] = useState(null) // 'edu' | 'career' | 'about' | 'media' | null
   const [mobileGroup, setMobileGroup] = useState(null)
   const navRef = useRef(null)
+  const telcEnabled = flags.telc !== false
+  const germanVisitorsEnabled = flags.german_visitors !== false
 
   // Close dropdown on outside click / Escape
   useEffect(() => {
@@ -120,28 +122,32 @@ export function Header({ t, lang, setLang, page, goto, user, navOpen, setNavOpen
             )
           })}
 
-          {/* telc — RED PROMINENT BUTTON */}
-          <button
-            onClick={() => goto('telc')}
-            className={`group ms-1 px-4 py-2 rounded-lg text-sm font-black tracking-tight transition-all inline-flex items-center gap-1.5 shadow-[0_4px_14px_-4px_rgba(204,0,0,0.55)] hover:shadow-[0_8px_22px_-4px_rgba(204,0,0,0.65)] hover:-translate-y-0.5 ${page === 'telc' ? 'bg-[#A30000] text-white ring-2 ring-[#FFCE00] ring-offset-1' : 'bg-[#CC0000] text-white hover:bg-[#A30000]'}`}
-            aria-label="telc Prüfungen"
-          >
-            <Award className="w-4 h-4 shrink-0" strokeWidth={2.5} />
-            <span>{t.nav.telc}</span>
-          </button>
+          {/* telc — RED PROMINENT BUTTON (hidden when disabled via feature flag) */}
+          {telcEnabled && (
+            <button
+              onClick={() => goto('telc')}
+              className={`group ms-1 px-4 py-2 rounded-lg text-sm font-black tracking-tight transition-all inline-flex items-center gap-1.5 shadow-[0_4px_14px_-4px_rgba(204,0,0,0.55)] hover:shadow-[0_8px_22px_-4px_rgba(204,0,0,0.65)] hover:-translate-y-0.5 ${page === 'telc' ? 'bg-[#A30000] text-white ring-2 ring-[#FFCE00] ring-offset-1' : 'bg-[#CC0000] text-white hover:bg-[#A30000]'}`}
+              aria-label="telc Prüfungen"
+            >
+              <Award className="w-4 h-4 shrink-0" strokeWidth={2.5} />
+              <span>{t.nav.telc}</span>
+            </button>
+          )}
 
-          {/* DE Visitors — Gold border, ALWAYS in German (targets German audience) */}
-          <a
-            href="/german-visitors"
-            className="ms-1 px-3 py-2 rounded-lg text-sm font-bold transition border-2 border-[#FFCE00] bg-[#FFCE00]/10 text-[#1A1A1A] hover:bg-[#FFCE00]/25 inline-flex items-center gap-1.5"
-            title="Für deutsche Besucher"
-            lang="de"
-            dir="ltr"
-            style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-          >
-            <span className="text-[11px] font-black bg-[#FFCE00] text-[#1A1A1A] px-1.5 py-0.5 rounded">DE</span>
-            <span>Für deutsche Besucher</span>
-          </a>
+          {/* DE Visitors — Gold border, ALWAYS in German (targets German audience) — hidden when disabled */}
+          {germanVisitorsEnabled && (
+            <a
+              href="/german-visitors"
+              className="ms-1 px-3 py-2 rounded-lg text-sm font-bold transition border-2 border-[#FFCE00] bg-[#FFCE00]/10 text-[#1A1A1A] hover:bg-[#FFCE00]/25 inline-flex items-center gap-1.5"
+              title="Für deutsche Besucher"
+              lang="de"
+              dir="ltr"
+              style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+            >
+              <span className="text-[11px] font-black bg-[#FFCE00] text-[#1A1A1A] px-1.5 py-0.5 rounded">DE</span>
+              <span>Für deutsche Besucher</span>
+            </a>
+          )}
         </nav>
 
         {/* Right cluster */}
@@ -225,25 +231,29 @@ export function Header({ t, lang, setLang, page, goto, user, navOpen, setNavOpen
               )
             })}
 
-            {/* telc — RED PROMINENT (mobile) */}
-            <button
-              onClick={() => { goto('telc'); setNavOpen(false) }}
-              className={`flex items-center justify-center gap-2 px-3 py-3 rounded-lg text-sm font-black tracking-tight shadow-[0_4px_14px_-4px_rgba(204,0,0,0.55)] mt-1 ${page === 'telc' ? 'bg-[#A30000] text-white ring-2 ring-[#FFCE00]' : 'bg-[#CC0000] text-white'}`}
-            >
-              <Award className="w-4 h-4" strokeWidth={2.5} />{t.nav.telc}
-            </button>
+            {/* telc — RED PROMINENT (mobile) — hidden when disabled */}
+            {telcEnabled && (
+              <button
+                onClick={() => { goto('telc'); setNavOpen(false) }}
+                className={`flex items-center justify-center gap-2 px-3 py-3 rounded-lg text-sm font-black tracking-tight shadow-[0_4px_14px_-4px_rgba(204,0,0,0.55)] mt-1 ${page === 'telc' ? 'bg-[#A30000] text-white ring-2 ring-[#FFCE00]' : 'bg-[#CC0000] text-white'}`}
+              >
+                <Award className="w-4 h-4" strokeWidth={2.5} />{t.nav.telc}
+              </button>
+            )}
 
-            {/* DE Visitors (mobile) — ALWAYS in German */}
-            <a
-              href="/german-visitors"
-              className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold border-2 border-[#FFCE00] bg-[#FFCE00]/10 text-[#1A1A1A] hover:bg-[#FFCE00]/25"
-              lang="de"
-              dir="ltr"
-              style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-            >
-              <span className="text-[11px] font-black bg-[#FFCE00] text-[#1A1A1A] px-1.5 py-0.5 rounded">DE</span>
-              Für deutsche Besucher
-            </a>
+            {/* DE Visitors (mobile) — ALWAYS in German — hidden when disabled */}
+            {germanVisitorsEnabled && (
+              <a
+                href="/german-visitors"
+                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold border-2 border-[#FFCE00] bg-[#FFCE00]/10 text-[#1A1A1A] hover:bg-[#FFCE00]/25"
+                lang="de"
+                dir="ltr"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+              >
+                <span className="text-[11px] font-black bg-[#FFCE00] text-[#1A1A1A] px-1.5 py-0.5 rounded">DE</span>
+                Für deutsche Besucher
+              </a>
+            )}
 
             {/* Auth (mobile) */}
             <div className="border-t pt-3 mt-2 flex flex-col gap-2">

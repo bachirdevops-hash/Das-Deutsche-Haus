@@ -12,6 +12,8 @@ import { Star, Calendar, Users, Globe, Phone, Mail, MapPin, MessageCircle, Arrow
 import { api } from '@/lib/api'
 import { ErrorBoundary } from '@/components/ddh/ErrorBoundary'
 import { LOGO_URL } from '@/lib/constants'
+import ComingSoonPage from '@/components/ddh/ComingSoonPage'
+import { useFeatureFlags } from '@/lib/useFeatureFlags'
 
 const SERVICE_GROUPS = [
   { key: 'before', title: 'Vor der Ankunft', items: [
@@ -53,6 +55,7 @@ export default function GermanVisitorsPage() {
   const [loading, setLoading] = useState(true)
   const [lightbox, setLightbox] = useState(null) // index in gallery
   const [flippedCards, setFlippedCards] = useState({})
+  const { isEnabled, ready } = useFeatureFlags()
 
   useEffect(() => {
     api.get('/api/german/page-data', { silent: true }).then(r => {
@@ -63,6 +66,11 @@ export default function GermanVisitorsPage() {
     document.documentElement.dir = 'ltr'
     document.title = 'Willkommen in Syrien — Das Deutsche Haus'
   }, [])
+
+  // 🎛️ Feature flag guard — show ComingSoon if disabled by admin
+  if (ready && !isEnabled('german_visitors')) {
+    return <ComingSoonPage lang="de" onGoHome={() => { window.location.href = '/' }} />
+  }
 
   if (loading || !data) {
     return (

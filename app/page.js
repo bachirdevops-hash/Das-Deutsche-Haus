@@ -34,6 +34,9 @@ import { InboxAdminPanel } from '@/components/ddh/admin/inbox/InboxAdminPanel'
 import { EmailLogsAdminPanel } from '@/components/ddh/admin/email/EmailLogsAdminPanel'
 import CoursesAdminPanel from '@/components/ddh/admin/courses/CoursesAdminPanel'
 import JobsAdminPanel from '@/components/ddh/admin/jobs/JobsAdminPanel'
+import FeatureFlagsAdminPanel from '@/components/ddh/admin/features/FeatureFlagsAdminPanel'
+import ComingSoonPage from '@/components/ddh/ComingSoonPage'
+import { useFeatureFlags } from '@/lib/useFeatureFlags'
 import { getIcon, fetchContent, fetchList } from '@/lib/content'
 
 // ==================== App ====================
@@ -45,6 +48,7 @@ function App() {
   const [authMode, setAuthMode] = useState(null)
   const [resetToken, setResetToken] = useState(null)
   const t = T[lang]
+  const { flags, isEnabled } = useFeatureFlags()
 
   useEffect(() => {
     const saved = (typeof window !== 'undefined' && localStorage.getItem('ddh_lang')) || 'ar'
@@ -138,12 +142,14 @@ function App() {
 
   return (
     <div dir={t.dir} className="min-h-screen bg-[#FAFAF8] text-[#1A1A1A]">
-      <Header t={t} lang={lang} setLang={setLang} page={page} goto={goto} user={user} navOpen={navOpen} setNavOpen={setNavOpen} setAuthMode={setAuthMode} logout={logout} />
+      <Header t={t} lang={lang} setLang={setLang} page={page} goto={goto} user={user} navOpen={navOpen} setNavOpen={setNavOpen} setAuthMode={setAuthMode} logout={logout} flags={flags} />
       <main className="pt-20">
         <ErrorBoundary>
-          {page === 'home' && <Home t={t} lang={lang} goto={goto} setAuthMode={setAuthMode} user={user} />}
+          {page === 'home' && <Home t={t} lang={lang} goto={goto} setAuthMode={setAuthMode} user={user} flags={flags} />}
           {page === 'courses' && <Courses t={t} lang={lang} user={user} setAuthMode={setAuthMode} />}
-          {page === 'telc' && <Telc t={t} lang={lang} user={user} setAuthMode={setAuthMode} />}
+          {page === 'telc' && (isEnabled('telc')
+            ? <Telc t={t} lang={lang} user={user} setAuthMode={setAuthMode} />
+            : <ComingSoonPage lang={lang} onGoHome={() => goto('home')} />)}
           {page === 'vocational' && <Vocational t={t} lang={lang} user={user} />}
           {page === 'travel' && <Travel t={t} lang={lang} user={user} />}
           {page === 'about' && <About t={t} lang={lang} />}
@@ -154,7 +160,7 @@ function App() {
           {page === 'teacher' && (['super_admin','teacher'].includes(user?.role) ? <TeacherPanel user={user} /> : <AccessDenied />)}
         </ErrorBoundary>
       </main>
-      <Footer t={t} lang={lang} goto={goto} />
+      <Footer t={t} lang={lang} goto={goto} flags={flags} />
       <AuthDialog mode={authMode} setMode={setAuthMode} lang={lang} t={t} onSuccess={onLoginSuccess} />
       {resetToken && <ResetPasswordDialog token={resetToken} onClose={() => { setResetToken(null); window.history.replaceState({}, '', window.location.pathname) }} />}
       <WhatsAppFloat lang={lang} />
@@ -163,7 +169,15 @@ function App() {
 }
 
 // ==================== Home (MySchool-inspired redesign) ====================
-function Home({ t, lang, goto, setAuthMode, user }) {
+function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
+  const telcEnabled = flags.telc !== false
+  // Helper: hide any CTA that navigates to a disabled feature
+  const isActionEnabled = (action) => {
+    if (!action || typeof action !== 'string') return true
+    if (!telcEnabled && (action === 'goto:telc' || action.startsWith('goto:telc'))) return false
+    if (flags.german_visitors === false && action.includes('/german-visitors')) return false
+    return true
+  }
   const [hero, setHero] = useState({})
   const [highlights, setHighlights] = useState({ items: [] })
   const [featured, setFeatured] = useState({})
@@ -232,8 +246,10 @@ function Home({ t, lang, goto, setAuthMode, user }) {
             <p className="text-lg md:text-xl text-white/90 mb-8 leading-relaxed max-w-2xl">{t.hero.subtitle}</p>
             <div className="flex flex-wrap gap-3">
               <button onClick={() => doAction(hero?.cta1Action || 'goto:courses')} className="btn-primary px-6 py-3.5 rounded-xl font-bold flex items-center gap-2"><GraduationCap className="w-5 h-5" />{hero?.cta1Label || t.hero.cta1}<ArrowRight className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} /></button>
-              <button onClick={() => doAction(hero?.cta2Action || 'goto:telc')} className="btn-gold px-6 py-3.5 rounded-xl font-bold flex items-center gap-2"><Award className="w-5 h-5" />{hero?.cta2Label || t.hero.cta2}</button>
-              {(hero?.cta3Label !== '' || hero?.cta3Label === undefined) && (
+              {isActionEnabled(hero?.cta2Action || 'goto:telc') && (
+                <button onClick={() => doAction(hero?.cta2Action || 'goto:telc')} className="btn-gold px-6 py-3.5 rounded-xl font-bold flex items-center gap-2"><Award className="w-5 h-5" />{hero?.cta2Label || t.hero.cta2}</button>
+              )}
+              {(hero?.cta3Label !== '' || hero?.cta3Label === undefined) && isActionEnabled(hero?.cta3Action || 'href:/visa-types#booking') && (
                 <button onClick={() => doAction(hero?.cta3Action || 'href:/visa-types#booking')} className="px-6 py-3.5 rounded-xl bg-white/15 backdrop-blur-md border-2 border-white/40 text-white font-bold flex items-center gap-2 hover:bg-white/25 transition"><Plane className="w-5 h-5" />{hero?.cta3Label || 'احجز استشارة'}</button>
               )}
             </div>
@@ -1071,7 +1087,7 @@ function StudentCourseView({ reg, lang, onClose }) {
 
 // ==================== ADMIN PANEL ====================
 function AdminPanel({ user }) {
-  const validTabs = ['inbox', 'stats', 'courses', 'jobs', 'users', 'assign', 'blog', 'activities', 'german', 'legal', 'logs', 'content', 'emails']
+  const validTabs = ['inbox', 'stats', 'courses', 'jobs', 'users', 'assign', 'blog', 'activities', 'german', 'legal', 'logs', 'content', 'emails', 'features']
   const [tab, setTab] = useState('inbox')
   useEffect(() => {
     // Read hash on mount + subscribe to hash changes (for deep-linking from notifications)
@@ -1095,7 +1111,7 @@ function AdminPanel({ user }) {
           <Badge className="bg-[#CC0000] text-white text-base px-4 py-1.5"><Shield className="w-4 h-4 me-1.5" />Super Admin</Badge>
         </div>
         <Tabs value={tab} onValueChange={changeTab}>
-          <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-13 gap-2 mb-6 h-auto bg-transparent p-0">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-14 gap-2 mb-6 h-auto bg-transparent p-0">
             <TabsTrigger
               value="inbox"
               className="flex-col gap-1 h-auto py-3 px-2 rounded-xl border-2 border-red-200 bg-gradient-to-br from-red-50 to-white text-red-700 font-bold text-xs hover:border-red-400 hover:bg-red-100/50 transition-all data-[state=active]:bg-[#CC0000] data-[state=active]:text-white data-[state=active]:border-[#CC0000] data-[state=active]:shadow-lg data-[state=active]:scale-[1.02] relative"
@@ -1187,6 +1203,13 @@ function AdminPanel({ user }) {
               <Mail className="w-5 h-5" />
               <span>سجل الإيميلات</span>
             </TabsTrigger>
+            <TabsTrigger
+              value="features"
+              className="flex-col gap-1 h-auto py-3 px-2 rounded-xl border-2 border-neutral-200 bg-white text-neutral-700 font-bold text-xs hover:border-fuchsia-300 hover:bg-fuchsia-50/50 transition-all data-[state=active]:bg-fuchsia-600 data-[state=active]:text-white data-[state=active]:border-fuchsia-600 data-[state=active]:shadow-lg data-[state=active]:scale-[1.02]"
+            >
+              <Sparkles className="w-5 h-5" />
+              <span>إدارة الصفحات</span>
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="inbox"><InboxAdminPanel /></TabsContent>
           <TabsContent value="stats"><AdminStats /></TabsContent>
@@ -1201,6 +1224,7 @@ function AdminPanel({ user }) {
           <TabsContent value="logs"><AdminActivityLogs /></TabsContent>
           <TabsContent value="content"><SiteContentAdminPanel /></TabsContent>
           <TabsContent value="emails"><EmailLogsAdminPanel /></TabsContent>
+          <TabsContent value="features"><FeatureFlagsAdminPanel /></TabsContent>
         </Tabs>
       </div>
     </section>

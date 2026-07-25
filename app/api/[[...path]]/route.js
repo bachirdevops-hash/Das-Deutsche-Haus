@@ -9,6 +9,7 @@ import { seedBlogIfEmpty, slugifyTitle } from '@/lib/blog_seed'
 import { seedActivitiesIfEmpty, activitySlugify } from '@/lib/activities_seed'
 import { seedLegalPagesIfEmpty, LEGAL_PAGES } from '@/lib/legal_seed'
 import { seedSiteContentIfEmpty, CONTENT_KEYS } from '@/lib/site_content_seed'
+import { seedFeaturesIfEmpty, FEATURE_KEYS } from '@/lib/features'
 import { emailNewLeadToAdmin, emailConfirmationToLead, emailWelcomeUser, emailPasswordReset } from '@/lib/email'
 
 cloudinary.config({
@@ -235,6 +236,7 @@ async function handle(request, { params }) {
         await seedActivitiesIfEmpty(db)
         await seedLegalPagesIfEmpty(db)
         await seedSiteContentIfEmpty(db)
+        await seedFeaturesIfEmpty(db)
       } catch (e) {
         console.error('[seed] error:', e?.message)
         global.__ddhSeeded = false // allow retry
@@ -390,6 +392,15 @@ async function handle(request, { params }) {
     }
 
     // ===== PUBLIC =====
+    // Feature Flags (public) — very small payload, cached-friendly
+    if (path === 'site-features' && method === 'GET') {
+      const items = await db.collection('site_features').find({}, { projection: { _id: 0, key: 1, enabled: 1 } }).toArray()
+      const flags = {}
+      for (const k of FEATURE_KEYS) flags[k] = true // default enabled
+      for (const it of items) flags[it.key] = !!it.enabled
+      return ok({ flags })
+    }
+
     if (path === 'courses' && method === 'GET') {
       const items = await db.collection('courses').find({}, { projection: { _id: 0 } }).sort({ level: 1 }).limit(100).toArray()
       return ok({ courses: items })
@@ -1048,8 +1059,30 @@ async function handle(request, { params }) {
           })
         }
       }
+      // Feature Flags admin — GET list / PATCH toggle
+      if (segs[1] === 'site-features') {
+        if (segs.length === 2 && method === 'GET') {
+          const items = await db.collection('site_features').find({}, { projection: { _id: 0 } }).toArray()
+          const map = {}
+          for (const it of items) map[it.key] = it
+          // Ensure every declared feature is returned (fallback default = true)
+          const result = FEATURE_KEYS.map(k => map[k] || { key: k, enabled: true, updatedAt: null })
+          return ok({ features: result })
+        }
+        if (segs.length === 3 && method === 'PATCH') {
+          const key = segs[2]
+          if (!FEATURE_KEYS.includes(key)) return ok({ error: 'مفتاح غير معروف' }, { status: 400 })
+          const { enabled } = await request.json()
+          await db.collection('site_features').updateOne(
+            { key },
+            { $set: { enabled: !!enabled, updatedAt: new Date().toISOString(), updatedBy: me.id } },
+            { upsert: true }
+          )
+          await logActivity(db, me, 'site_feature.toggle', 'site_features', key, { enabled: !!enabled }, ip)
+          return ok({ ok: true, key, enabled: !!enabled })
+        }
+      }
       if (segs[1] === 'stats' && method === 'GET') {
-        // Use projection to fetch only needed fields (price_usd) — reduces memory footprint
         const [users, regs, books, apps, cons, contacts] = await Promise.all([
           db.collection('users').countDocuments(),
           db.collection('course_registrations').find({}, { projection: { _id: 0, price_usd: 1 } }).limit(10000).toArray(),
