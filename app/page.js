@@ -467,9 +467,9 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
           <h2 className="text-3xl md:text-5xl font-black mb-4 max-w-3xl mx-auto leading-tight">{cta?.title || 'جاهز لبدء رحلتك إلى ألمانيا؟'}</h2>
           <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">{cta?.subtitle}</p>
           <div className="flex flex-wrap justify-center gap-3">
-            {cta?.button1?.enabled !== false && cta?.button1?.label && (<button onClick={() => doAction(cta.button1.action)} className="btn-gold px-7 py-3.5 rounded-xl font-bold">{cta.button1.label}</button>)}
-            {cta?.button2?.enabled !== false && cta?.button2?.label && (<button onClick={() => doAction(cta.button2.action)} className="px-7 py-3.5 rounded-xl bg-white text-[#1A1A1A] font-bold hover:bg-neutral-100 transition">{cta.button2.label}</button>)}
-            {cta?.button3?.enabled !== false && cta?.button3?.label && (<button onClick={() => doAction(cta.button3.action)} className="px-7 py-3.5 rounded-xl border-2 border-white/40 text-white font-bold hover:bg-white/10 transition flex items-center gap-2"><Plane className="w-4 h-4" />{cta.button3.label}</button>)}
+            {cta?.button1?.enabled !== false && cta?.button1?.label && isActionEnabled(cta.button1.action) && (<button onClick={() => doAction(cta.button1.action)} className="btn-gold px-7 py-3.5 rounded-xl font-bold">{cta.button1.label}</button>)}
+            {cta?.button2?.enabled !== false && cta?.button2?.label && isActionEnabled(cta.button2.action) && (<button onClick={() => doAction(cta.button2.action)} className="px-7 py-3.5 rounded-xl bg-white text-[#1A1A1A] font-bold hover:bg-neutral-100 transition">{cta.button2.label}</button>)}
+            {cta?.button3?.enabled !== false && cta?.button3?.label && isActionEnabled(cta.button3.action) && (<button onClick={() => doAction(cta.button3.action)} className="px-7 py-3.5 rounded-xl border-2 border-white/40 text-white font-bold hover:bg-white/10 transition flex items-center gap-2"><Plane className="w-4 h-4" />{cta.button3.label}</button>)}
           </div>
         </div>
       </section>
