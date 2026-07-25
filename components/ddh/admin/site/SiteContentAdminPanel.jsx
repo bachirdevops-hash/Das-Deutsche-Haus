@@ -436,8 +436,8 @@ function HomeCtaEditor() {
   if (!data) return <Loading />
   const btnFields = [
     { key: 'button1', label: 'الزر 1 (ذهبي)' },
-    { key: 'button2', label: 'الزر 2 (أبيض)' },
-    { key: 'button3', label: 'الزر 3 (احجز استشارة)' },
+    { key: 'button2', label: 'الزر 2 (أحمر)' },
+    { key: 'button3', label: 'الزر 3 (أسود)' },
   ]
   return (
     <div className="space-y-4">

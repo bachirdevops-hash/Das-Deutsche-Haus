@@ -468,8 +468,8 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
           <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">{cta?.subtitle}</p>
           <div className="flex flex-wrap justify-center gap-3">
             {cta?.button1?.enabled !== false && cta?.button1?.label && isActionEnabled(cta.button1.action) && (<button onClick={() => doAction(cta.button1.action)} className="btn-gold px-7 py-3.5 rounded-xl font-bold">{cta.button1.label}</button>)}
-            {cta?.button2?.enabled !== false && cta?.button2?.label && isActionEnabled(cta.button2.action) && (<button onClick={() => doAction(cta.button2.action)} className="px-7 py-3.5 rounded-xl bg-white text-[#1A1A1A] font-bold hover:bg-neutral-100 transition">{cta.button2.label}</button>)}
-            {cta?.button3?.enabled !== false && cta?.button3?.label && isActionEnabled(cta.button3.action) && (<button onClick={() => doAction(cta.button3.action)} className="px-7 py-3.5 rounded-xl border-2 border-white/40 text-white font-bold hover:bg-white/10 transition flex items-center gap-2"><Plane className="w-4 h-4" />{cta.button3.label}</button>)}
+            {cta?.button2?.enabled !== false && cta?.button2?.label && isActionEnabled(cta.button2.action) && (<button onClick={() => doAction(cta.button2.action)} className="px-7 py-3.5 rounded-xl bg-[#CC0000] hover:bg-[#A30000] text-white font-bold transition shadow-[0_6px_18px_-4px_rgba(204,0,0,0.55)] hover:-translate-y-0.5">{cta.button2.label}</button>)}
+            {cta?.button3?.enabled !== false && cta?.button3?.label && isActionEnabled(cta.button3.action) && (<button onClick={() => doAction(cta.button3.action)} className="px-7 py-3.5 rounded-xl bg-[#1A1A1A] hover:bg-[#333] text-white font-bold transition border border-white/20 shadow-lg hover:-translate-y-0.5 flex items-center gap-2"><Plane className="w-4 h-4" />{cta.button3.label}</button>)}
           </div>
         </div>
       </section>
