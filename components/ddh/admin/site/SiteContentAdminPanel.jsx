@@ -144,13 +144,31 @@ function HomeHeroEditor() {
   if (!data) return <Loading />
   return (
     <div className="space-y-4">
-      <PanelHeader title="قسم Hero — أعلى الصفحة" desc="الشارة الذهبية + النصوص + أزرار CTA." />
+      <PanelHeader title="قسم Hero — أعلى الصفحة" desc="الشارة الذهبية + العنوان + الوصف + أزرار CTA. تعديل هذه النصوص لا يتطلب رفع تحديث." />
       <Card><CardContent className="p-4 space-y-3">
         <div className="grid sm:grid-cols-2 gap-3">
           <div><Label className="text-xs">شارة Hero (نص)</Label><Input value={data.badge || ''} onChange={e => setData({ ...data, badge: e.target.value })} placeholder="تسجيلات سبتمبر 2026 — مفتوحة الآن" /></div>
           <div><Label className="text-xs">شارة صغيرة (Pin)</Label><Input value={data.badgePin || ''} onChange={e => setData({ ...data, badgePin: e.target.value })} placeholder="جديد" /></div>
         </div>
-        <div className="grid sm:grid-cols-2 gap-3 pt-2 border-t">
+
+        {/* 🆕 Bilingual Title */}
+        <div className="pt-3 border-t space-y-2">
+          <div className="text-[11px] font-bold text-neutral-600 uppercase tracking-wider">🇸🇾 العنوان الرئيسي (عربي)</div>
+          <Input value={data.title_ar || ''} onChange={e => setData({ ...data, title_ar: e.target.value })} placeholder="بوابتك إلى ألمانيا تبدأ من هنا" />
+          <div className="text-[11px] font-bold text-neutral-600 uppercase tracking-wider">🇩🇪 Titel (Deutsch)</div>
+          <Input dir="ltr" value={data.title_de || ''} onChange={e => setData({ ...data, title_de: e.target.value })} placeholder="Dein Tor nach Deutschland beginnt hier" />
+        </div>
+
+        {/* 🆕 Bilingual Description */}
+        <div className="pt-3 border-t space-y-2">
+          <div className="text-[11px] font-bold text-neutral-600 uppercase tracking-wider">🇸🇾 الوصف (عربي)</div>
+          <Textarea rows={3} value={data.desc_ar || ''} onChange={e => setData({ ...data, desc_ar: e.target.value })} placeholder="طريقك إلى ألمانيا يبدأ من هنا — نمشي معك خطوة بخطوة نحو مستقبل ترسمه بيديك." />
+          <div className="text-[11px] font-bold text-neutral-600 uppercase tracking-wider">🇩🇪 Beschreibung (Deutsch)</div>
+          <Textarea dir="ltr" rows={3} value={data.desc_de || ''} onChange={e => setData({ ...data, desc_de: e.target.value })} placeholder="Dein Weg nach Deutschland beginnt hier — wir begleiten dich Schritt für Schritt in die Zukunft, die du dir wünschst." />
+          <p className="text-[10.5px] text-neutral-500">💡 إذا تركت الحقلين فارغين، سيتم استخدام النص الافتراضي من ملفات الترجمة.</p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-3 pt-3 border-t">
           <div><Label className="text-xs">زر 1 - النص</Label><Input value={data.cta1Label || ''} onChange={e => setData({ ...data, cta1Label: e.target.value })} placeholder="سجّل في كورس" /></div>
           <div><Label className="text-xs">زر 1 - الإجراء</Label><Input value={data.cta1Action || ''} onChange={e => setData({ ...data, cta1Action: e.target.value })} placeholder="goto:courses" /></div>
           <div><Label className="text-xs">زر 2 - النص</Label><Input value={data.cta2Label || ''} onChange={e => setData({ ...data, cta2Label: e.target.value })} placeholder="احجز امتحان telc" /></div>

@@ -242,8 +242,8 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
                 <span className="font-semibold">{hero.badge}</span>
               </div>
             )}
-            <h1 className="text-4xl md:text-6xl font-black leading-tight mb-5 tracking-tight">{t.hero.title}</h1>
-            <p className="text-lg md:text-xl text-white/90 mb-8 leading-relaxed max-w-2xl">{t.hero.subtitle}</p>
+            <h1 className="text-4xl md:text-6xl font-black leading-tight mb-5 tracking-tight">{(lang === 'de' ? hero?.title_de : hero?.title_ar) || t.hero.title}</h1>
+            <p className="text-lg md:text-xl text-white/90 mb-8 leading-relaxed max-w-2xl">{(lang === 'de' ? hero?.desc_de : hero?.desc_ar) || t.hero.subtitle}</p>
             <div className="flex flex-wrap gap-3">
               <button onClick={() => doAction(hero?.cta1Action || 'goto:courses')} className="btn-primary px-6 py-3.5 rounded-xl font-bold flex items-center gap-2"><GraduationCap className="w-5 h-5" />{hero?.cta1Label || t.hero.cta1}<ArrowRight className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} /></button>
               {isActionEnabled(hero?.cta2Action || 'goto:telc') && (
