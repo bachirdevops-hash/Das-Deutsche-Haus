@@ -21,6 +21,12 @@ const EMPTY_FORM = {
   requirements_de: '',
   description_ar: '',
   description_de: '',
+  career_ar: '',
+  career_de: '',
+  steps_ar: '',
+  steps_de: '',
+  faq_ar: '',
+  faq_de: '',
   is_active: true,
 }
 
@@ -158,6 +164,12 @@ function JobFormDialog({ job, onClose, onSaved }) {
         requirements_de: form.requirements_de,
         description_ar: form.description_ar,
         description_de: form.description_de,
+        career_ar: form.career_ar,
+        career_de: form.career_de,
+        steps_ar: form.steps_ar,
+        steps_de: form.steps_de,
+        faq_ar: form.faq_ar,
+        faq_de: form.faq_de,
         is_active: form.is_active !== false,
       }
       const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -223,8 +235,40 @@ function JobFormDialog({ job, onClose, onSaved }) {
           </div>
 
           <div>
-            <Label>وصف إضافي (عربي) — اختياري</Label>
-            <Textarea rows={2} value={form.description_ar} onChange={e => set('description_ar', e.target.value)} placeholder="تفاصيل إضافية عن الوظيفة..." />
+            <Label>وصف كامل للمهنة (عربي) — يظهر في صفحة التفاصيل</Label>
+            <Textarea rows={4} value={form.description_ar} onChange={e => set('description_ar', e.target.value)} placeholder="طبيعة العمل اليومي، ما الذي يميز هذه المهنة..." />
+          </div>
+          <div>
+            <Label>وصف كامل (Deutsch) — اختياري</Label>
+            <Textarea rows={3} value={form.description_de} onChange={e => set('description_de', e.target.value)} dir="ltr" placeholder="Beschreibung des Berufs..." />
+          </div>
+
+          <div className="rounded-xl border-2 border-dashed border-neutral-200 p-4 space-y-4">
+            <p className="text-xs font-black text-neutral-500">📄 محتوى صفحة التفاصيل (اختياري — يظهر فقط ما تعبّيه)</p>
+            <div>
+              <Label>أين سيعمل الخريج؟ (عربي)</Label>
+              <Textarea rows={2} value={form.career_ar} onChange={e => set('career_ar', e.target.value)} placeholder="مستشفيات، مراكز رعاية، عيادات..." />
+            </div>
+            <div>
+              <Label>Karriere / Arbeitsorte (Deutsch)</Label>
+              <Textarea rows={2} value={form.career_de} onChange={e => set('career_de', e.target.value)} dir="ltr" />
+            </div>
+            <div>
+              <Label>خطوات التقديم (عربي) — كل سطر = خطوة</Label>
+              <Textarea rows={4} value={form.steps_ar} onChange={e => set('steps_ar', e.target.value)} placeholder={'قدّم الطلب من الموقع\nنتواصل معك خلال 48 ساعة\nمقابلة تقييم أولية\n...'} />
+            </div>
+            <div>
+              <Label>Bewerbungsschritte (Deutsch) — eine Zeile = ein Schritt</Label>
+              <Textarea rows={3} value={form.steps_de} onChange={e => set('steps_de', e.target.value)} dir="ltr" />
+            </div>
+            <div>
+              <Label>أسئلة شائعة (عربي) — السؤال بسطر ثم الجواب، وسطر فارغ بين كل سؤال وآخر</Label>
+              <Textarea rows={5} value={form.faq_ar} onChange={e => set('faq_ar', e.target.value)} placeholder={'هل أحتاج خبرة سابقة؟\nلا، التدريب يبدأ من الصفر.\n\nمتى يبدأ التدريب؟\nعادة في سبتمبر من كل عام.'} />
+            </div>
+            <div>
+              <Label>FAQ (Deutsch) — Frage, dann Antwort; Leerzeile dazwischen</Label>
+              <Textarea rows={4} value={form.faq_de} onChange={e => set('faq_de', e.target.value)} dir="ltr" />
+            </div>
           </div>
 
           <DialogFooter className="gap-2">

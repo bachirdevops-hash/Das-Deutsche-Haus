@@ -25,10 +25,11 @@ export default async function sitemap() {
     { url: `${SITE_URL}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
   ]
 
-  // Dynamic — blog posts & activities
-  const [blog, activities] = await Promise.all([
+  // Dynamic — blog posts, activities & Ausbildung jobs
+  const [blog, activities, vocational] = await Promise.all([
     fetchDynamic('blog?limit=200'),
     fetchDynamic('activities?limit=200'),
+    fetchDynamic('vocational/jobs'),
   ])
 
   const blogRoutes = (blog?.items || blog?.posts || []).map((p) => ({
@@ -45,5 +46,12 @@ export default async function sitemap() {
     priority: 0.7,
   }))
 
-  return [...staticRoutes, ...blogRoutes, ...activityRoutes]
+  const jobRoutes = (vocational?.jobs || []).filter(j => j.slug).map((j) => ({
+    url: `${SITE_URL}/ausbildung/${j.slug}`,
+    lastModified: j.updatedAt ? new Date(j.updatedAt) : now,
+    changeFrequency: 'monthly',
+    priority: 0.8,
+  }))
+
+  return [...staticRoutes, ...blogRoutes, ...activityRoutes, ...jobRoutes]
 }

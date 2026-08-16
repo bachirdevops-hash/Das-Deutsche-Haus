@@ -389,6 +389,16 @@ async function handle(request, { params }) {
       const items = await db.collection('vocational_jobs').find({ is_active: { $ne: false } }, { projection: { _id: 0 } }).limit(100).toArray()
       return ok({ jobs: items })
     }
+    // 🌐 PUBLIC — single Ausbildung by slug or id (for /ausbildung/[slug] detail page)
+    if (segs[0] === 'vocational' && segs[1] === 'jobs' && segs[2] && method === 'GET') {
+      const key = decodeURIComponent(segs[2])
+      const job = await db.collection('vocational_jobs').findOne(
+        { $or: [{ slug: key }, { id: key }], is_active: { $ne: false } },
+        { projection: { _id: 0 } }
+      )
+      if (!job) return notFound()
+      return ok({ job })
+    }
 
     // ===== STUDENT =====
     if (path === 'course-registrations' && method === 'POST') {
@@ -1354,13 +1364,14 @@ async function handle(request, { params }) {
       if (!me) return unauth()
       if (!['super_admin', 'manager'].includes(me.role)) return forbidden()
 
-      const handleCrud = async (col, idField = 'id') => {
+      const handleCrud = async (col, idField = 'id', transform = null) => {
         if (segs.length === 2 && method === 'GET') {
           const items = await db.collection(col).find({}, { projection: { _id: 0 } }).toArray()
           return ok({ items })
         }
         if (segs.length === 2 && method === 'POST') {
-          const body = await request.json()
+          let body = await request.json()
+          if (transform) body = await transform(body, null)
           const item = { id: uuidv4(), ...body, createdAt: new Date().toISOString() }
           await db.collection(col).insertOne(item)
           await logActivity(db, me, `create_${col}`, col, item.id, body, ip)
@@ -1368,7 +1379,8 @@ async function handle(request, { params }) {
         }
         const id = segs[2]
         if (segs.length === 3 && method === 'PATCH') {
-          const body = await request.json()
+          let body = await request.json()
+          if (transform) body = await transform(body, id)
           await db.collection(col).updateOne({ [idField]: id }, { $set: body })
           await logActivity(db, me, `update_${col}`, col, id, body, ip)
           return ok({ ok: true })
@@ -1381,8 +1393,24 @@ async function handle(request, { params }) {
         return null
       }
 
+      // 🔗 Slug generator for Ausbildung detail pages (/ausbildung/[slug])
+      const jobSlugTransform = async (body, id) => {
+        const slugify = (str) => String(str || '')
+          .toLowerCase()
+          .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+          .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60)
+        let slug = slugify(body.slug) || slugify(body.title_de) || slugify(body.title_ar)
+        if (!slug) { const { slug: _s, ...rest } = body; return rest }
+        // ensure uniqueness (exclude the job being updated)
+        let candidate = slug, n = 2
+        while (await db.collection('vocational_jobs').findOne({ slug: candidate, ...(id ? { id: { $ne: id } } : {}) })) {
+          candidate = `${slug}-${n++}`
+        }
+        return { ...body, slug: candidate }
+      }
+
       if (segs[1] === 'courses') { const r = await handleCrud('courses'); if (r) return r }
-      if (segs[1] === 'jobs') { const r = await handleCrud('vocational_jobs'); if (r) return r }
+      if (segs[1] === 'jobs') { const r = await handleCrud('vocational_jobs', 'id', jobSlugTransform); if (r) return r }
 
       if (segs[1] === 'contact-messages') {
         if (method === 'GET') {
