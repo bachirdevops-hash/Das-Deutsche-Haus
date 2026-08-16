@@ -87,7 +87,7 @@ export default function GermanVisitorsPage() {
   const embassies = emergency.filter(e => e.category === 'embassy')
   const syriaEm = emergency.filter(e => e.category === 'syria_emergency')
   const ddhSupport = emergency.filter(e => e.category === 'ddh_support')[0]
-  const waNumber = (settings?.whatsapp_number || ddhSupport?.phone || '963111234567').replace(/\D/g, '')
+  const waNumber = (settings?.whatsapp_number || ddhSupport?.phone || '4915254196668').replace(/\D/g, '')
 
   return (
     <ErrorBoundary>

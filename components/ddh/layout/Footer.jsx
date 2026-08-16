@@ -28,14 +28,14 @@ export function Footer({ t, lang, goto, flags = {} }) {
             <li className="flex items-center gap-2"><MapPin className="w-4 h-4" />{lang === 'ar' ? 'دمشق، المزة' : 'Damaskus, Mazzeh'}</li>
             <li className="flex items-center gap-2">
               <Phone className="w-4 h-4" />
-              <a href={`tel:${(process.env.NEXT_PUBLIC_PHONE || '+963 11 123 4567').replace(/\s/g, '')}`} className="hover:text-[#FFCE00]" dir="ltr">
-                {process.env.NEXT_PUBLIC_PHONE || '+963 11 123 4567'}
+              <a href={`tel:${(process.env.NEXT_PUBLIC_PHONE || '+49 1525 4196668').replace(/\s/g, '')}`} className="hover:text-[#FFCE00]" dir="ltr">
+                {process.env.NEXT_PUBLIC_PHONE || '+49 1525 4196668'}
               </a>
             </li>
             <li className="flex items-center gap-2">
               <Mail className="w-4 h-4" />
-              <a href={`mailto:${process.env.NEXT_PUBLIC_EMAIL || 'info@dasdeutschehaus.sy'}`} className="hover:text-[#FFCE00]" dir="ltr">
-                {process.env.NEXT_PUBLIC_EMAIL || 'info@dasdeutschehaus.sy'}
+              <a href={`mailto:${process.env.NEXT_PUBLIC_EMAIL || 'info@das-deutsche-haus.com'}`} className="hover:text-[#FFCE00]" dir="ltr">
+                {process.env.NEXT_PUBLIC_EMAIL || 'info@das-deutsche-haus.com'}
               </a>
             </li>
           </ul>

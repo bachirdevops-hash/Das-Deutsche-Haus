@@ -715,7 +715,7 @@ function PageSettingsManager() {
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-black text-lg">إعدادات WhatsApp و SEO</h3>
-          <div><Label>رقم WhatsApp للدعم 24/7 (بدون رمز +)</Label><Input value={s.whatsapp_number || ''} onChange={e => set('whatsapp_number', e.target.value)} dir="ltr" placeholder="963111234567" /></div>
+          <div><Label>رقم WhatsApp للدعم 24/7 (بدون رمز +)</Label><Input value={s.whatsapp_number || ''} onChange={e => set('whatsapp_number', e.target.value)} dir="ltr" placeholder="4915254196668" /></div>
           <div><Label>رسالة WhatsApp التلقائية (ألماني)</Label><Textarea rows={2} value={s.whatsapp_message || ''} onChange={e => set('whatsapp_message', e.target.value)} dir="ltr" placeholder="Hallo! Ich interessiere mich für eine Reise nach Syrien..." /></div>
           <div className="pt-3 border-t"><Label>SEO — عنوان الصفحة (ألماني)</Label><Input value={s.seo_title || ''} onChange={e => set('seo_title', e.target.value)} dir="ltr" /></div>
           <div><Label>SEO — وصف الصفحة (Meta description)</Label><Textarea rows={2} value={s.seo_description || ''} onChange={e => set('seo_description', e.target.value)} dir="ltr" /></div>

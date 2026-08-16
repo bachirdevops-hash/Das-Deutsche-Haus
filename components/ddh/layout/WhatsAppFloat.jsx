@@ -2,7 +2,7 @@
 import { MessageCircle } from 'lucide-react'
 
 export function WhatsAppFloat() {
-  const num = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '963111234567'
+  const num = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '4915254196668').replace(/\D/g, '')
   return (
     <a
       href={`https://wa.me/${num}`}
