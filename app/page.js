@@ -38,6 +38,7 @@ const EmailLogsAdminPanel = dynamic(() => import('@/components/ddh/admin/email/E
 const CoursesAdminPanel = dynamic(() => import('@/components/ddh/admin/courses/CoursesAdminPanel'), { ssr: false, loading: AdminLoading })
 const JobsAdminPanel = dynamic(() => import('@/components/ddh/admin/jobs/JobsAdminPanel'), { ssr: false, loading: AdminLoading })
 const FeatureFlagsAdminPanel = dynamic(() => import('@/components/ddh/admin/features/FeatureFlagsAdminPanel'), { ssr: false, loading: AdminLoading })
+const ConsultationSlotsAdminPanel = dynamic(() => import('@/components/ddh/admin/consultations/ConsultationSlotsAdminPanel'), { ssr: false, loading: AdminLoading })
 import { useFeatureFlags } from '@/lib/useFeatureFlags'
 import { getIcon, fetchContent, fetchList } from '@/lib/content'
 import { DEFAULT_HOME_HERO, DEFAULT_HOME_SERVICES, DEFAULT_HOME_JOURNEY } from '@/lib/site_content_seed'
@@ -1107,13 +1108,20 @@ function AdminPanel({ user }) {
           <Badge className="bg-[#CC0000] text-white text-base px-4 py-1.5"><Shield className="w-4 h-4 me-1.5" />Super Admin</Badge>
         </div>
         <Tabs value={tab} onValueChange={changeTab}>
-          <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-14 gap-2 mb-6 h-auto bg-transparent p-0">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-15 gap-2 mb-6 h-auto bg-transparent p-0">
             <TabsTrigger
               value="inbox"
               className="flex-col gap-1 h-auto py-3 px-2 rounded-xl border-2 border-red-200 bg-gradient-to-br from-red-50 to-white text-red-700 font-bold text-xs hover:border-red-400 hover:bg-red-100/50 transition-all data-[state=active]:bg-[#CC0000] data-[state=active]:text-white data-[state=active]:border-[#CC0000] data-[state=active]:shadow-lg data-[state=active]:scale-[1.02] relative"
             >
               <Inbox className="w-5 h-5" />
               <span>الواردات</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="slots"
+              className="flex-col gap-1 h-auto py-3 px-2 rounded-xl border-2 border-neutral-200 bg-white text-neutral-700 font-bold text-xs hover:border-[#CC0000]/40 hover:bg-red-50/40 transition-all data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-[#FFCE00] data-[state=active]:border-[#1A1A1A] data-[state=active]:shadow-lg data-[state=active]:scale-[1.02]"
+            >
+              <Calendar className="w-5 h-5" />
+              <span>مواعيد الاستشارات</span>
             </TabsTrigger>
             <TabsTrigger
               value="stats"
@@ -1208,6 +1216,7 @@ function AdminPanel({ user }) {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="inbox"><InboxAdminPanel /></TabsContent>
+          <TabsContent value="slots"><ConsultationSlotsAdminPanel /></TabsContent>
           <TabsContent value="stats"><AdminStats /></TabsContent>
           <TabsContent value="courses"><CoursesAdminPanel /></TabsContent>
           <TabsContent value="jobs"><JobsAdminPanel /></TabsContent>

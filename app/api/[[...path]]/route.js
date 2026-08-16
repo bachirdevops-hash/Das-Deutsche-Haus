@@ -48,6 +48,16 @@ async function sendEmail({ to, subject, html, text }) {
 
 // ---------- Rate Limiter (in-memory) ----------
 const rateLimitStore = new Map()
+
+// 🇩🇪 Germany timezone strategy — slots are stored as German wall-clock times (Europe/Berlin).
+// DST-safe: "now" is always computed inside the Berlin timezone, never from server local time.
+function berlinNow() {
+  const d = new Date()
+  const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d)
+  const time = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hour12: false }).format(d)
+  return { date, time }
+}
+const isFutureSlot = (s, now) => s.date > now.date || (s.date === now.date && s.startTime > now.time)
 function rateLimit(key, max = 10, windowMs = 60000) {
   const now = Date.now()
   const arr = (rateLimitStore.get(key) || []).filter(t => now - t < windowMs)
@@ -480,6 +490,64 @@ async function handle(request, { params }) {
       await notifyAdminsOfLead(db, 'travel_consultation', `طلب استشارة سفر`, `${c.name || 'مجهول'} (${c.email}) طلب استشارة`, c.id, c)
       return ok({ consultation: { ...c, _id: undefined } })
     }
+    // ===== CONSULTATION BOOKING SYSTEM (public) =====
+    if (path === 'consultation-slots' && method === 'GET') {
+      const now = berlinNow()
+      const slots = await db.collection('consultation_slots')
+        .find({ status: 'available' }, { projection: { _id: 0, bookingId: 0 } })
+        .sort({ date: 1, startTime: 1 }).limit(500).toArray()
+      return ok({ slots: slots.filter(s => isFutureSlot(s, now)), timezone: 'Europe/Berlin' })
+    }
+    if (path === 'consultation-bookings' && method === 'POST') {
+      const rl = rateLimit(`book:${ip}`, 8, 60000)
+      if (!rl.ok) return ok({ error: 'محاولات كثيرة — حاول مرة أخرى بعد دقيقة' }, { status: 429 })
+      const me = await getCurrentUser(db, request)
+      const body = await request.json()
+      const { slotId, name, email, phone, notes, consultationTypeId } = body
+      if (!slotId) return ok({ error: 'يرجى اختيار موعد' }, { status: 400 })
+      if (!me && (!name?.trim() || !email?.trim() || !phone?.trim())) {
+        return ok({ error: 'الاسم والبريد ورقم الهاتف مطلوبة' }, { status: 400 })
+      }
+      const slot = await db.collection('consultation_slots').findOne({ id: slotId })
+      if (!slot) return ok({ error: 'الموعد غير موجود' }, { status: 404 })
+      const now = berlinNow()
+      if (!isFutureSlot(slot, now)) return ok({ error: 'هذا الموعد انتهى وقته — اختر موعداً آخر' }, { status: 400 })
+      let ctype = null
+      if (consultationTypeId) ctype = await db.collection('consultation_types').findOne({ id: consultationTypeId })
+      const bookingId = uuidv4()
+      // 🔒 ATOMIC slot claim — MongoDB findOneAndUpdate guarantees only ONE request wins even under simultaneous booking attempts
+      const claimRes = await db.collection('consultation_slots').findOneAndUpdate(
+        { id: slotId, status: 'available' },
+        { $set: { status: 'booked', bookingId, updatedAt: new Date().toISOString() } },
+      )
+      const claimed = claimRes && (claimRes.value !== undefined ? claimRes.value : claimRes)
+      if (!claimed) return ok({ error: 'عذراً — تم حجز هذا الموعد للتو من قبل شخص آخر. يرجى اختيار وقت آخر.' }, { status: 409 })
+      const c = {
+        id: bookingId,
+        userId: me?.id || null,
+        slotId,
+        slotDate: slot.date,
+        slotTime: slot.startTime,
+        slotEndTime: slot.endTime,
+        duration: slot.duration,
+        name: (name || me?.name || '').trim(),
+        email: (email || me?.email || '').toLowerCase().trim(),
+        phone: (phone || me?.phone || '').trim(),
+        notes: notes || '',
+        consultationTypeId: consultationTypeId || null,
+        consultationTypeName: ctype?.name || null,
+        visaType: ctype?.name || 'استشارة',
+        preferredDate: `${slot.date} ${slot.startTime}`,
+        bookingKind: 'slot',
+        source: me ? 'authenticated' : 'public_form',
+        status: 'confirmed',
+        createdAt: new Date().toISOString(),
+      }
+      await db.collection('travel_consultations').insertOne(c)
+      await logActivity(db, me, 'book_consultation_slot', 'travel_consultation', c.id, { slotId, date: slot.date, time: slot.startTime, public: !me }, ip)
+      await notifyAdminsOfLead(db, 'travel_consultation', `حجز موعد استشارة — ${slot.date} · ${slot.startTime}`, `${c.name} (${c.email}) حجز موعد استشارة يوم ${slot.date} الساعة ${slot.startTime} (${slot.duration} دقيقة)`, c.id, c)
+      return ok({ booking: { id: c.id, slotDate: c.slotDate, slotTime: c.slotTime, slotEndTime: c.slotEndTime, duration: c.duration, name: c.name, consultationTypeName: c.consultationTypeName, status: c.status } })
+    }
     if (path === 'contact' && method === 'POST') {
       const body = await request.json()
       const m = { id: uuidv4(), ...body, replied: false, reply: '', createdAt: new Date().toISOString() }
@@ -760,6 +828,74 @@ async function handle(request, { params }) {
       const me = await getCurrentUser(db, request)
       if (!me) return unauth()
       if (me.role !== 'super_admin') return forbidden()
+
+      // ===== CONSULTATION SLOTS — availability management (admin) =====
+      if (segs[1] === 'consultation-slots') {
+        if (segs.length === 2 && method === 'GET') {
+          const slots = await db.collection('consultation_slots').find({}, { projection: { _id: 0 } }).sort({ date: 1, startTime: 1 }).limit(2000).toArray()
+          const ids = slots.map(s => s.bookingId).filter(Boolean)
+          const bookings = ids.length ? await db.collection('travel_consultations').find({ id: { $in: ids } }, { projection: { _id: 0, id: 1, name: 1, email: 1, phone: 1, status: 1, consultationTypeName: 1 } }).toArray() : []
+          const bmap = Object.fromEntries(bookings.map(b => [b.id, b]))
+          return ok({ slots: slots.map(s => ({ ...s, booking: s.bookingId ? (bmap[s.bookingId] || null) : null })), now: berlinNow(), timezone: 'Europe/Berlin' })
+        }
+        if (segs[2] === 'generate' && method === 'POST') {
+          const { date, startTime, endTime, duration, breakMinutes = 0 } = await request.json()
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) return ok({ error: 'صيغة التاريخ غير صحيحة (YYYY-MM-DD)' }, { status: 400 })
+          if (!/^\d{2}:\d{2}$/.test(startTime || '') || !/^\d{2}:\d{2}$/.test(endTime || '')) return ok({ error: 'صيغة الوقت غير صحيحة (HH:MM)' }, { status: 400 })
+          const dur = parseInt(duration), brk = parseInt(breakMinutes) || 0
+          if (!dur || dur < 5 || dur > 240) return ok({ error: 'مدة الموعد يجب أن تكون بين 5 و240 دقيقة' }, { status: 400 })
+          if (brk < 0 || brk > 120) return ok({ error: 'مدة الاستراحة غير صالحة' }, { status: 400 })
+          const toMin = (t) => parseInt(t.slice(0, 2)) * 60 + parseInt(t.slice(3, 5))
+          const toHM = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+          const startM = toMin(startTime), endM = toMin(endTime)
+          if (endM <= startM) return ok({ error: 'وقت النهاية يجب أن يكون بعد وقت البداية' }, { status: 400 })
+          // 🛡️ Duplicate/overlap protection — safe even if the form is submitted twice
+          const existing = await db.collection('consultation_slots').find({ date }, { projection: { _id: 0, startTime: 1, endTime: 1 } }).toArray()
+          const overlaps = (s1, e1) => existing.some(x => toMin(x.startTime) < e1 && s1 < toMin(x.endTime))
+          const created = [], skipped = []
+          const nowISO = new Date().toISOString()
+          for (let m = startM; m + dur <= endM; m += dur + brk) {
+            const s = toHM(m), e = toHM(m + dur)
+            if (overlaps(m, m + dur)) { skipped.push(`${s}–${e}`); continue }
+            created.push({ id: uuidv4(), date, startTime: s, endTime: e, duration: dur, status: 'available', bookingId: null, createdAt: nowISO, updatedAt: nowISO })
+          }
+          if (created.length) await db.collection('consultation_slots').insertMany(created)
+          await logActivity(db, me, 'generate_slots', 'consultation_slot', date, { created: created.length, skipped: skipped.length }, ip)
+          return ok({ created: created.length, skipped: skipped.length, skippedTimes: skipped })
+        }
+        if (segs.length === 3 && method === 'PATCH') {
+          const { status } = await request.json()
+          if (!['available', 'disabled'].includes(status)) return ok({ error: 'حالة غير مسموحة' }, { status: 400 })
+          const slot = await db.collection('consultation_slots').findOne({ id: segs[2] })
+          if (!slot) return ok({ error: 'الموعد غير موجود' }, { status: 404 })
+          if (slot.status === 'booked') return ok({ error: 'لا يمكن تعديل موعد محجوز — ألغِ الحجز أولاً' }, { status: 400 })
+          await db.collection('consultation_slots').updateOne({ id: segs[2] }, { $set: { status, updatedAt: new Date().toISOString() } })
+          return ok({ success: true })
+        }
+        if (segs.length === 3 && method === 'DELETE') {
+          const slot = await db.collection('consultation_slots').findOne({ id: segs[2] })
+          if (!slot) return ok({ error: 'الموعد غير موجود' }, { status: 404 })
+          if (slot.status === 'booked') return ok({ error: 'لا يمكن حذف موعد محجوز — ألغِ الحجز أولاً' }, { status: 400 })
+          await db.collection('consultation_slots').deleteOne({ id: segs[2] })
+          await logActivity(db, me, 'delete_slot', 'consultation_slot', segs[2], { date: slot.date, time: slot.startTime }, ip)
+          return ok({ success: true })
+        }
+      }
+      // ===== CANCEL a consultation booking — history is PRESERVED, slot is released =====
+      if (segs[1] === 'consultation-bookings' && segs[3] === 'cancel' && method === 'POST') {
+        const booking = await db.collection('travel_consultations').findOne({ id: segs[2] })
+        if (!booking) return ok({ error: 'الحجز غير موجود' }, { status: 404 })
+        if (booking.status === 'cancelled') return ok({ error: 'الحجز ملغى مسبقاً' }, { status: 400 })
+        await db.collection('travel_consultations').updateOne({ id: booking.id }, { $set: { status: 'cancelled', cancelledAt: new Date().toISOString(), cancelledBy: me.id } })
+        if (booking.slotId) {
+          await db.collection('consultation_slots').updateOne(
+            { id: booking.slotId, bookingId: booking.id },
+            { $set: { status: 'available', bookingId: null, updatedAt: new Date().toISOString() } }
+          )
+        }
+        await logActivity(db, me, 'cancel_consultation_booking', 'travel_consultation', booking.id, { slotId: booking.slotId || null }, ip)
+        return ok({ success: true })
+      }
 
       if (segs[1] === 'users') {
         if (segs.length === 2 && method === 'GET') {
