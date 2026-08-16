@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { Inbox, BookOpen, Award, Briefcase, Plane, Mail, Phone, Calendar, UserPlus, Copy, CheckCircle2, Trash2, Eye, RefreshCw, MessageSquare } from 'lucide-react'
+import { Inbox, BookOpen, Award, Briefcase, Plane, Mail, Phone, Calendar, Trash2, Eye, RefreshCw, MessageSquare } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ddh/shared'
 import { ErrorBoundary } from '@/components/ddh/ErrorBoundary'
 
@@ -36,7 +36,7 @@ export function InboxAdminPanel() {
             <Inbox className="w-8 h-8 text-[#CC0000]" />
             <h2 className="text-3xl font-black tracking-tight">صندوق الواردات الموحّد</h2>
           </div>
-          <p className="text-sm text-neutral-600">كل الطلبات الواردة من نماذج الموقع — تسجيلات الكورسات، طلبات Ausbildung، استشارات السفر، ورسائل تواصل معنا. اعتمد الطلب لإنشاء حساب طالب تلقائياً.</p>
+          <p className="text-sm text-neutral-600">كل الطلبات الواردة من نماذج الموقع — تسجيلات الكورسات، طلبات Ausbildung، استشارات السفر، ورسائل تواصل معنا.</p>
         </div>
 
         <Tabs defaultValue={RESOURCES[0].key}>
@@ -142,9 +142,6 @@ function LeadList({ resource }) {
                 </div>
                 <div className="md:col-span-4 flex gap-1.5 justify-end flex-wrap">
                   <Button size="sm" variant="outline" onClick={() => setViewing(item)}><Eye className="w-3.5 h-3.5 ms-1" />عرض</Button>
-                  {!resource.noConvert && item.status !== 'converted' && item.email && (
-                    <ConvertToUserButton resource={resource.key} item={item} onConverted={load} />
-                  )}
                   <Select value={item.status || 'new'} onValueChange={(v) => updateStatus(item.id, v)}>
                     <SelectTrigger className="h-9 w-32 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -189,73 +186,6 @@ function SourceBadge({ source }) {
   if (!source) return null
   if (source === 'public_form') return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 mt-1 ms-1">نموذج عام</Badge>
   return null
-}
-
-function ConvertToUserButton({ resource, item, onConverted }) {
-  const [showResult, setShowResult] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const convert = async () => {
-    if (!confirm(`إنشاء حساب طالب لـ "${item.name}" بالبريد ${item.email}؟`)) return
-    setLoading(true)
-    const r = await apiSend(`/api/admin/${resource}/${item.id}/convert-to-user`, 'POST')
-    setLoading(false)
-    if (r.error) { toast.error(r.error); return }
-    setShowResult(r)
-    onConverted()
-  }
-  return (
-    <>
-      <Button size="sm" onClick={convert} disabled={loading} className="bg-green-600 hover:bg-green-700 text-white">
-        <UserPlus className="w-3.5 h-3.5 ms-1" />{loading ? '...' : 'إنشاء حساب'}
-      </Button>
-      {showResult && (
-        <Dialog open onOpenChange={() => setShowResult(null)}>
-          <DialogContent className="bg-white max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-green-600" />تم إنشاء الحساب</DialogTitle>
-              <DialogDescription>{showResult.isExisting ? 'الطالب لديه حساب مسبق — تم ربط الطلب.' : 'أرسل هذه البيانات للطالب ليدخل لحسابه:'}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3 py-2">
-              <CopyRow label="الاسم" value={showResult.user?.name} />
-              <CopyRow label="البريد الإلكتروني" value={showResult.user?.email} />
-              {showResult.createdPassword && <CopyRow label="كلمة المرور المؤقتة" value={showResult.createdPassword} highlight />}
-              {!showResult.createdPassword && <div className="p-3 bg-blue-50 text-blue-800 rounded-lg text-sm">هذا الحساب كان موجوداً مسبقاً. لم يتم تغيير كلمة المرور.</div>}
-              {showResult.createdPassword && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900 leading-relaxed">
-                  ⚠️ احفظ كلمة المرور الآن — لن تظهر مرة أخرى. سيُطلب من الطالب تغييرها بعد أول دخول.
-                </div>
-              )}
-              <div className="pt-2 border-t">
-                <p className="text-xs text-neutral-600 mb-2">نص جاهز للإرسال على WhatsApp:</p>
-                <Textarea readOnly rows={5} className="text-xs" value={`مرحباً ${showResult.user?.name}،
-
-تم إنشاء حسابك في Das Deutsche Haus.
-البريد: ${showResult.user?.email}
-${showResult.createdPassword ? `كلمة المرور المؤقتة: ${showResult.createdPassword}` : ''}
-
-ادخل من: ${typeof window !== 'undefined' ? window.location.origin : ''}
-نراك قريباً 🇩🇪`} />
-              </div>
-            </div>
-            <DialogFooter><Button onClick={() => setShowResult(null)} className="btn-primary">تم</Button></DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-    </>
-  )
-}
-
-function CopyRow({ label, value, highlight = false }) {
-  const copy = () => { navigator.clipboard.writeText(value); toast.success('تم النسخ ✓') }
-  return (
-    <div className={`flex items-center gap-2 p-2.5 rounded-lg ${highlight ? 'bg-yellow-50 border-2 border-yellow-300' : 'bg-neutral-50 border'}`}>
-      <div className="flex-1">
-        <div className="text-[10px] uppercase text-neutral-500 font-bold">{label}</div>
-        <div className={`font-mono text-sm ${highlight ? 'font-bold text-base' : ''}`} dir="ltr">{value}</div>
-      </div>
-      <Button size="icon" variant="ghost" onClick={copy}><Copy className="w-4 h-4" /></Button>
-    </div>
-  )
 }
 
 function LeadDetailDialog({ item, resource, onClose, onSaved }) {

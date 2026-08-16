@@ -44,3 +44,15 @@ html[dir='rtl'] h1, html[dir='rtl'] h2, html[dir='rtl'] h3 { font-family: 'IBM P
 
 .card-hover { transition: all .3s; }
 .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,.08); }
+
+/* 📱 Mobile form stability — iOS Safari auto-zooms (and jumps the viewport) when a focused
+   input has font-size < 16px. Forcing 16px on touch-size screens keeps the page steady
+   while filling forms. Desktop is unaffected. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea,
+  [role='combobox'] {
+    font-size: 16px !important;
+  }
+}
