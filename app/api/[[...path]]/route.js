@@ -1855,6 +1855,16 @@ async function handle(request, { params }) {
     }
 
     // ===== SITE CONTENT — PUBLIC =====
+    // GET /api/about/page-data — everything the About page needs in ONE request (perf)
+    if (path === 'about/page-data' && method === 'GET') {
+      const [heroDoc, missionDoc, team, partnerships] = await Promise.all([
+        db.collection('site_content').findOne({ key: 'about_hero' }, { projection: { _id: 0 } }),
+        db.collection('site_content').findOne({ key: 'about_mission' }, { projection: { _id: 0 } }),
+        db.collection('team_members').find({ published: { $ne: false } }, { projection: { _id: 0 } }).sort({ order: 1, createdAt: 1 }).toArray(),
+        db.collection('partnerships').find({ published: { $ne: false } }, { projection: { _id: 0 } }).sort({ order: 1, createdAt: 1 }).toArray(),
+      ])
+      return ok({ hero: heroDoc?.data || {}, mission: missionDoc?.data || {}, team, partnerships })
+    }
     // GET /api/content/<key> — fetch single content section
     if (segs[0] === 'content' && segs.length === 2 && method === 'GET') {
       const key = segs[1]

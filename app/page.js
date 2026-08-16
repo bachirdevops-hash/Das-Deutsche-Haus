@@ -1036,10 +1036,13 @@ function About({ t, lang }) {
   const [team, setTeam] = useState([])
   const [accred, setAccred] = useState([])
   useEffect(() => {
-    fetchContent('about_hero').then(setHero)
-    fetchContent('about_mission').then(setMission)
-    fetchList('team-members').then(setTeam)
-    fetchList('partnerships').then(setAccred)
+    // ⚡ Single bulk request instead of 4 separate API calls
+    fetch('/api/about/page-data', { cache: 'no-store' }).then(r => r.json()).then(d => {
+      setHero(d.hero || {})
+      setMission(d.mission || {})
+      setTeam(d.team || [])
+      setAccred(d.partnerships || [])
+    }).catch(() => {})
   }, [])
   return (
     <section className="py-12 md:py-16">
