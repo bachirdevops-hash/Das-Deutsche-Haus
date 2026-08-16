@@ -326,7 +326,9 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
               <span className="text-[#FFCE00] text-sm font-bold tracking-wide">{lang === 'de' ? (journey.label_de || journey.label_ar) : journey.label_ar}</span>
             </div>
             <h2 className="text-3xl md:text-5xl font-black mb-3 leading-tight">{lang === 'de' ? (journey.title_de || journey.title_ar) : journey.title_ar}</h2>
-            <p className="text-white/60 text-lg">{lang === 'de' ? (journey.subtitle_de || journey.subtitle_ar) : journey.subtitle_ar}</p>
+            {(lang === 'de' ? (journey.subtitle_de || journey.subtitle_ar) : journey.subtitle_ar) && (
+              <p className="text-white/60 text-lg">{lang === 'de' ? (journey.subtitle_de || journey.subtitle_ar) : journey.subtitle_ar}</p>
+            )}
           </div>
           <div className="relative">
             {/* connecting line (desktop) */}
