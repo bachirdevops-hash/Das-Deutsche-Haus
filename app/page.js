@@ -1270,9 +1270,29 @@ function StudentCourseView({ reg, lang, onClose }) {
 }
 
 // ==================== ADMIN PANEL ====================
+// 🔴 Numeric alert badge shown on admin tiles when new requests are waiting
+function TileBadge({ n }) {
+  if (!n || n <= 0) return null
+  return (
+    <span className="absolute -top-1.5 -start-1.5 min-w-[20px] h-5 px-1 rounded-full bg-[#CC0000] text-white text-[11px] font-black inline-flex items-center justify-center border-2 border-white shadow-md z-10">
+      {n > 99 ? '99+' : n}
+    </span>
+  )
+}
+
 function AdminPanel({ user }) {
   const validTabs = ['inbox', 'stats', 'courses', 'jobs', 'users', 'assign', 'blog', 'activities', 'german', 'legal', 'logs', 'content', 'emails', 'features']
   const [tab, setTab] = useState('inbox')
+  // 🔔 New-request counts for tile badges (auto-refresh every 60s)
+  const [alerts, setAlerts] = useState({})
+  useEffect(() => {
+    let alive = true
+    const loadAlerts = () => fetch('/api/admin/inbox-counts', { credentials: 'include' })
+      .then(r => r.json()).then(d => { if (alive) setAlerts(d.counts || {}) }).catch(() => {})
+    loadAlerts()
+    const iv = setInterval(loadAlerts, 60000)
+    return () => { alive = false; clearInterval(iv) }
+  }, [tab])
   useEffect(() => {
     // Read hash on mount + subscribe to hash changes (for deep-linking from notifications)
     const readHash = () => {
@@ -1302,6 +1322,7 @@ function AdminPanel({ user }) {
             >
               <Inbox className="w-5 h-5" />
               <span>الواردات</span>
+              <TileBadge n={alerts.inboxTotal} />
             </TabsTrigger>
             <TabsTrigger
               value="slots"
@@ -1354,17 +1375,19 @@ function AdminPanel({ user }) {
             </TabsTrigger>
             <TabsTrigger
               value="activities"
-              className="flex-col gap-1 h-auto py-3 px-2 rounded-xl border-2 border-neutral-200 bg-white text-neutral-700 font-bold text-xs hover:border-neutral-700 hover:bg-neutral-100 transition-all data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white data-[state=active]:border-[#1A1A1A] data-[state=active]:shadow-lg data-[state=active]:scale-[1.02]"
+              className="flex-col gap-1 h-auto py-3 px-2 rounded-xl border-2 border-neutral-200 bg-white text-neutral-700 font-bold text-xs hover:border-neutral-700 hover:bg-neutral-100 transition-all data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white data-[state=active]:border-[#1A1A1A] data-[state=active]:shadow-lg data-[state=active]:scale-[1.02] relative"
             >
               <span className="text-lg leading-none">🗓️</span>
               <span>النشاطات</span>
+              <TileBadge n={alerts.activities} />
             </TabsTrigger>
             <TabsTrigger
               value="german"
-              className="flex-col gap-1 h-auto py-3 px-2 rounded-xl border-2 border-neutral-200 bg-white text-neutral-700 font-bold text-xs hover:border-[#FFCE00] hover:bg-yellow-50 transition-all data-[state=active]:bg-[#FFCE00] data-[state=active]:text-[#1A1A1A] data-[state=active]:border-[#FFCE00] data-[state=active]:shadow-lg data-[state=active]:scale-[1.02]"
+              className="flex-col gap-1 h-auto py-3 px-2 rounded-xl border-2 border-neutral-200 bg-white text-neutral-700 font-bold text-xs hover:border-[#FFCE00] hover:bg-yellow-50 transition-all data-[state=active]:bg-[#FFCE00] data-[state=active]:text-[#1A1A1A] data-[state=active]:border-[#FFCE00] data-[state=active]:shadow-lg data-[state=active]:scale-[1.02] relative"
             >
               <span className="text-lg leading-none">🇩🇪</span>
               <span>الزوار الألمان</span>
+              <TileBadge n={alerts.german} />
             </TabsTrigger>
             <TabsTrigger
               value="legal"

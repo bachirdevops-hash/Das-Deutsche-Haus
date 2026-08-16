@@ -1090,13 +1090,23 @@ async function handle(request, { params }) {
       // GET /api/admin/inbox-counts → NEW/unhandled items per inbox tab (for tab badges)
       if (segs[1] === 'inbox-counts' && method === 'GET') {
         const fresh = [{ status: 'new' }, { status: { $exists: false } }, { status: null }, { status: 'submitted' }]
-        const [cr, va, tc, cm] = await Promise.all([
+        const [cr, va, tc, cm, gb, gs, actR] = await Promise.all([
           db.collection('course_registrations').countDocuments({ $or: fresh }),
           db.collection('vocational_applications').countDocuments({ $or: fresh }),
           db.collection('travel_consultations').countDocuments({ $or: [...fresh, { status: 'confirmed' }] }),
           db.collection('contact_messages').countDocuments({ $or: fresh }),
+          db.collection('german_bookings').countDocuments({ status: { $in: ['New', 'new'] } }),
+          db.collection('german_service_requests').countDocuments({ status: { $in: ['New', 'new'] } }),
+          db.collection('activity_registrations').countDocuments({ status: { $in: ['Pending', 'pending', 'new'] } }),
         ])
-        return ok({ counts: { 'course-registrations': cr, 'vocational-applications': va, 'travel-consultations': tc, 'contact-messages': cm } })
+        return ok({
+          counts: {
+            'course-registrations': cr, 'vocational-applications': va, 'travel-consultations': tc, 'contact-messages': cm,
+            german: gb + gs, germanBookings: gb, germanServices: gs,
+            activities: actR,
+            inboxTotal: cr + va + tc + cm,
+          },
+        })
       }
       const LEAD_COLLECTIONS = {
         'course-registrations': { coll: 'course_registrations', label: 'تسجيل كورس' },
