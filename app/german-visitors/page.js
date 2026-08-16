@@ -116,7 +116,6 @@ export default function GermanVisitorsPage() {
 
 // ============== TOP NAV ==============
 function TopNav({ settings, waNumber }) {
-  const waDisplay = (settings?.whatsapp_number || '').trim() || '+49 1525 4196668'
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-b border-neutral-200 shadow-sm">
       <div className="h-1 flex"><div className="flex-1 bg-[#1A1A1A]" /><div className="flex-1 bg-[#CC0000]" /><div className="flex-1 bg-[#FFCE00]" /></div>
@@ -132,7 +131,7 @@ function TopNav({ settings, waNumber }) {
           <a href="#booking" className="hover:text-[#CC0000] transition">Buchen</a>
         </nav>
         <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold text-sm transition shadow-md">
-          <MessageCircle className="w-4 h-4" /> WhatsApp <span dir="ltr" className="font-black">{waDisplay}</span>
+          <MessageCircle className="w-4 h-4" /> WhatsApp
         </a>
       </div>
     </header>
