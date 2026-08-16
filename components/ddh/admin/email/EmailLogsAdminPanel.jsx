@@ -12,6 +12,8 @@ import { ConfirmDialog } from '@/components/ddh/shared'
 import { ErrorBoundary } from '@/components/ddh/ErrorBoundary'
 
 const TYPE_LABELS = {
+  admin_contact_message: { ar: 'إشعار أدمن - رسالة تواصل', emoji: '📩' },
+  confirm_contact_message: { ar: 'تأكيد مرسل - تواصل', emoji: '✅' },
   admin_course_registration: { ar: 'إشعار أدمن - تسجيل كورس', emoji: '🎓' },
   admin_vocational_application: { ar: 'إشعار أدمن - Ausbildung', emoji: '💼' },
   admin_travel_consultation: { ar: 'إشعار أدمن - استشارة', emoji: '✈️' },

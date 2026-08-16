@@ -153,13 +153,14 @@ async function notifyAdminsOfLead(db, kind, title, message, entityId, leadObj) {
     link: kind === 'course_registration' ? '/admin#courses'
         : kind === 'vocational_application' ? '/admin#vocational'
         : kind === 'travel_consultation' ? '/admin#consultations'
+        : kind === 'contact_message' ? '/admin#inbox'
         : null,
     priority: 'high',
   })
-  // 📧 Fire emails — best-effort, never blocks (no await)
+  // 📧 Send emails — awaited so they always complete before the response (errors never block thanks to .catch)
   if (leadObj) {
-    emailNewLeadToAdmin(db, kind, leadObj).catch(e => console.error('[email admin]', e?.message))
-    emailConfirmationToLead(db, kind, leadObj).catch(e => console.error('[email confirm]', e?.message))
+    await emailNewLeadToAdmin(db, kind, leadObj).catch(e => console.error('[email admin]', e?.message))
+    await emailConfirmationToLead(db, kind, leadObj).catch(e => console.error('[email confirm]', e?.message))
   }
 }
 
@@ -483,6 +484,8 @@ async function handle(request, { params }) {
       const body = await request.json()
       const m = { id: uuidv4(), ...body, replied: false, reply: '', createdAt: new Date().toISOString() }
       await db.collection('contact_messages').insertOne(m)
+      // 📧 Notify admins (in-app + email) about the new contact message
+      await notifyAdminsOfLead(db, 'contact_message', `رسالة تواصل جديدة`, `${m.name || 'مجهول'} (${m.email || '-'})‏: ${(m.message || '').slice(0, 80)}`, m.id, m)
       return ok({ message: { ...m, _id: undefined } })
     }
     if (path === 'dashboard' && method === 'GET') {
