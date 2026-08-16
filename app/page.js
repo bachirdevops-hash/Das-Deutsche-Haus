@@ -219,12 +219,12 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
 
   const statsItems = (stats.items || []).sort((a, b) => (a.order || 0) - (b.order || 0))
   const whyCards = (why.cards || []).sort((a, b) => (a.order || 0) - (b.order || 0))
-  const highlightItems = (highlights.items || []).sort((a, b) => (a.order || 0) - (b.order || 0))
   const featuredEvent = activities[0]
 
   return (
     <>
-      {/* ===== 1. HERO ===== */}
+      {/* ===== 1. HERO — V2: clear message + single primary CTA ===== */}
+      {/* 🚧 V2 copy is code-level for preview approval; will be synced to CMS defaults on deploy */}
       <section className="relative min-h-[680px] flex items-center overflow-hidden bg-[#1A1A1A]">
         <HeroSlideshow />
         <div className="absolute inset-0 hero-overlay z-[2]" />
@@ -237,86 +237,101 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
                 <span className="font-semibold">{hero.badge}</span>
               </div>
             )}
-            <h1 className="text-4xl md:text-6xl font-black leading-tight mb-5 tracking-tight">{(lang === 'de' ? hero?.title_de : hero?.title_ar) || t.hero.title}</h1>
-            <p className="text-lg md:text-xl text-white/90 mb-8 leading-relaxed max-w-2xl">{(lang === 'de' ? hero?.desc_de : hero?.desc_ar) || t.hero.subtitle}</p>
-            <div className="flex flex-wrap gap-3">
-              <button onClick={() => doAction(hero?.cta1Action || 'goto:courses')} className="btn-primary px-6 py-3.5 rounded-xl font-bold flex items-center gap-2"><GraduationCap className="w-5 h-5" />{hero?.cta1Label || t.hero.cta1}<ArrowRight className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} /></button>
-              {isActionEnabled(hero?.cta2Action || 'goto:contact') && (
-                <button onClick={() => doAction(hero?.cta2Action || 'goto:contact')} className="btn-gold px-6 py-3.5 rounded-xl font-bold flex items-center gap-2"><Award className="w-5 h-5" />{hero?.cta2Label || t.hero.cta2}</button>
-              )}
-              {(hero?.cta3Label !== '' || hero?.cta3Label === undefined) && isActionEnabled(hero?.cta3Action || 'href:/visa-types#booking') && (
-                <button onClick={() => doAction(hero?.cta3Action || 'href:/visa-types#booking')} className="px-6 py-3.5 rounded-xl bg-white/15 backdrop-blur-md border-2 border-white/40 text-white font-bold flex items-center gap-2 hover:bg-white/25 transition"><Plane className="w-5 h-5" />{hero?.cta3Label || 'احجز استشارة'}</button>
-              )}
+            <h1 className="text-4xl md:text-6xl font-black leading-tight mb-5 tracking-tight">
+              {lang === 'de'
+                ? <>Deutsch lernen, <span className="text-[#FFCE00]">Ausbildung</span> sichern — Zukunft in Deutschland aufbauen.</>
+                : <>تعلّم الألمانية، احصل على <span className="text-[#FFCE00]">Ausbildung</span>، وابنِ مستقبلك في ألمانيا.</>}
+            </h1>
+            <p className="text-lg md:text-xl text-white/90 mb-8 leading-relaxed max-w-2xl">
+              {lang === 'de'
+                ? 'Kurse, anerkannte Zertifikate und persönliche Beratung — wir begleiten dich Schritt für Schritt bis nach Deutschland.'
+                : 'كورسات لغة، شهادات معتمدة، واستشارات شخصية — نرافقك خطوة بخطوة من أول درس حتى وصولك إلى ألمانيا.'}
+            </p>
+            <div className="flex flex-wrap items-center gap-3 mb-8">
+              <button onClick={() => doAction('goto:courses')} className="btn-primary px-8 py-4 rounded-xl font-black text-lg flex items-center gap-2 shadow-[0_10px_30px_-8px_rgba(204,0,0,0.7)]">
+                <GraduationCap className="w-6 h-6" />{lang === 'de' ? 'Starte deine Reise' : 'ابدأ رحلتك الآن'}<ArrowRight className={`w-5 h-5 ${lang === 'ar' ? 'rotate-180' : ''}`} />
+              </button>
+              <button onClick={() => doAction('href:/visa-types#booking')} className="px-6 py-4 rounded-xl bg-transparent border-2 border-white/50 text-white font-bold flex items-center gap-2 hover:bg-white/10 hover:border-white transition">
+                <Plane className="w-5 h-5" />{lang === 'de' ? 'Kostenlose Beratung' : 'احجز استشارة مجانية'}
+              </button>
+            </div>
+            {/* Trust chips */}
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/85">
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#FFCE00]" />{lang === 'de' ? `${new Date().getFullYear() - 2018}+ Jahre Erfahrung` : `${new Date().getFullYear() - 2018}+ سنوات خبرة`}</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#FFCE00]" />{lang === 'de' ? 'Anerkannte Zertifikate' : 'شهادات معتمدة'}</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#FFCE00]" />{lang === 'de' ? 'Begleitung bis Deutschland' : 'مرافقة كاملة حتى ألمانيا'}</span>
             </div>
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-2 flag-gradient-h z-10" />
       </section>
 
-      {/* ===== 2. 3 QUICK HIGHLIGHT CARDS (overlapping the hero) ===== */}
-      {highlightItems.length > 0 && (
-        <section className="bg-white relative -mt-16 z-20 pb-8">
-          <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-3 gap-5">
-              {highlightItems.map((h) => {
-                const Ic = getIcon(h.icon)
-                const isEmoji = (h.icon || '').length <= 4 && /\p{Emoji}/u.test(h.icon || '')
-                return (
-                  <Card key={h.id} className="card-hover bg-white shadow-xl border-t-4" style={{ borderTopColor: h.color || '#CC0000' }}>
-                    <CardContent className="p-7">
-                      <div className="flex items-start gap-4 mb-3">
-                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0" style={{ background: `${h.color || '#CC0000'}15` }}>
-                          {isEmoji ? <span className="text-3xl leading-none">{h.icon}</span> : <Ic className="w-7 h-7" style={{ color: h.color || '#CC0000' }} />}
-                        </div>
-                        <div>
-                          <div className="text-2xl font-black tracking-tight" style={{ color: h.color || '#CC0000' }}>{h.value}</div>
-                          <h3 className="text-base font-bold mt-0.5">{h.title}</h3>
-                        </div>
-                      </div>
-                      <p className="text-sm text-neutral-600 leading-relaxed">{h.description}</p>
-                    </CardContent>
-                  </Card>
-                )
-              })}
+      {/* ===== 2. WHAT WE OFFER — 4 clear service cards ===== */}
+      <section className="bg-white relative -mt-16 z-20 pb-16">
+        <div className="container mx-auto px-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { icon: BookOpen, color: '#CC0000', title: lang === 'de' ? 'Deutschkurse A1–C2' : 'كورسات اللغة الألمانية', desc: lang === 'de' ? 'Alle Niveaus, kleine Gruppen, flexible Zeiten.' : 'من A1 حتى C2 — مجموعات صغيرة وجدول مرن.', action: 'goto:courses', cta: lang === 'de' ? 'Kurse ansehen' : 'تصفح الكورسات' },
+              { icon: Briefcase, color: '#2C5F9E', title: 'Ausbildung & Weiterbildung', desc: lang === 'de' ? 'Vom Sprachkurs zum Ausbildungsvertrag in Deutschland.' : 'من كورس اللغة إلى عقد تدريب مهني في ألمانيا.', action: 'goto:vocational', cta: lang === 'de' ? 'Berufe entdecken' : 'اكتشف المهن' },
+              { icon: Plane, color: '#B8860B', title: lang === 'de' ? 'Studien- & Reiseberatung' : 'استشارات الدراسة والسفر', desc: lang === 'de' ? 'Visum, Zulassung und Unterlagen — persönlich beraten.' : 'فيزا، قبول جامعي، وتجهيز الأوراق — باستشارة شخصية.', action: 'goto:travel', cta: lang === 'de' ? 'Beratung buchen' : 'احجز استشارة' },
+              { icon: Building2, color: '#1A1A1A', title: lang === 'de' ? 'Vorbereitung auf die Arbeit' : 'التحضير للعمل في ألمانيا', desc: lang === 'de' ? 'Bewerbung, Anerkennung und der erste Job.' : 'السيرة الذاتية، معادلة الشهادات، وأول وظيفة.', action: 'href:/visa-types#booking', cta: lang === 'de' ? 'Mehr erfahren' : 'اعرف أكثر' },
+            ].map((s, i) => {
+              const Ic = s.icon
+              return (
+                <Card key={i} className="card-hover bg-white shadow-xl border-t-4 group cursor-pointer" style={{ borderTopColor: s.color }} onClick={() => doAction(s.action)}>
+                  <CardContent className="p-6">
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110" style={{ background: `${s.color}12` }}>
+                      <Ic className="w-7 h-7" style={{ color: s.color }} />
+                    </div>
+                    <h3 className="text-lg font-black mb-1.5">{s.title}</h3>
+                    <p className="text-sm text-neutral-600 leading-relaxed mb-4">{s.desc}</p>
+                    <span className="text-sm font-bold inline-flex items-center gap-1 group-hover:gap-2 transition-all" style={{ color: s.color }}>{s.cta}<ArrowRight className={`w-3.5 h-3.5 ${lang === 'ar' ? 'rotate-180' : ''}`} /></span>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== 3. YOUR JOURNEY — 5 steps timeline (dark) ===== */}
+      <section className="py-20 bg-[#161616] text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 left-0 h-1 flag-gradient-h" />
+        <div className="container mx-auto px-4">
+          <div className="mb-14">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="w-10 h-0.5 bg-[#FFCE00] inline-block" />
+              <span className="text-[#FFCE00] text-sm font-bold tracking-wide">{lang === 'de' ? 'Schritt für Schritt' : 'الطريق خطوة بخطوة'}</span>
+            </div>
+            <h2 className="text-3xl md:text-5xl font-black mb-3 leading-tight">{lang === 'de' ? 'Wie beginnt deine Reise?' : 'كيف تبدأ رحلتك من هون؟'}</h2>
+            <p className="text-white/60 text-lg">{lang === 'de' ? 'Fünf klare Schritte — du weißt immer genau, wo du stehst.' : 'خمس خطوات واضحة — تعرف بالضبط وين حالك بأي لحظة.'}</p>
+          </div>
+          <div className="relative">
+            {/* connecting line (desktop) */}
+            <div className="hidden md:block absolute top-7 right-[10%] left-[10%] h-px bg-white/20" />
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-x-4 gap-y-10">
+              {[
+                { n: lang === 'de' ? '1' : '١', title: lang === 'de' ? 'Einstufungstest' : 'اختبار تحديد المستوى', desc: lang === 'de' ? 'Kostenlos & online, 15 Min.' : 'مجاني وأونلاين، بياخد 15 دقيقة.' },
+                { n: lang === 'de' ? '2' : '٢', title: lang === 'de' ? 'Passender Kurs' : 'تسجيل بالكورس المناسب', desc: lang === 'de' ? 'Kleine Gruppen, flexibel.' : 'مجموعات صغيرة، جدول مرن.' },
+                { n: lang === 'de' ? '3' : '٣', title: lang === 'de' ? 'Lernen & Betreuung' : 'دراسة ومتابعة', desc: lang === 'de' ? 'Tests & persönliches Feedback.' : 'اختبارات دورية ومتابعة فردية.' },
+                { n: lang === 'de' ? '4' : '٤', title: lang === 'de' ? 'Anerkanntes Zertifikat' : 'شهادة معتمدة', desc: lang === 'de' ? 'Bereit für Arbeit & Studium.' : 'جاهزة لسوق العمل أو الجامعات الألمانية.' },
+                { n: lang === 'de' ? '5' : '٥', title: lang === 'de' ? 'Reiseberatung' : 'استشارة السفر', desc: lang === 'de' ? 'Visum, Ausbildung oder Zulassung.' : 'فيزا، Ausbildung، أو قبول جامعي.' },
+              ].map((st, i) => (
+                <div key={i} className="text-center relative">
+                  <div className="w-14 h-14 rounded-full bg-[#FFF8E7] text-[#1A1A1A] font-black text-xl flex items-center justify-center mx-auto mb-4 relative z-10 shadow-[0_0_0_6px_rgba(255,206,0,0.12)]">{st.n}</div>
+                  <h3 className="font-black text-base mb-1.5">{st.title}</h3>
+                  <p className="text-white/55 text-xs leading-relaxed max-w-[180px] mx-auto">{st.desc}</p>
+                </div>
+              ))}
             </div>
           </div>
-        </section>
-      )}
-
-      {/* ===== 3. FEATURED EVENT (auto-pulled from latest activity) ===== */}
-      {featuredEvent && (
-        <section className="py-10 bg-white">
-          <div className="container mx-auto px-4">
-            <Card className="card-hover overflow-hidden border-2 border-[#FFCE00]/40 bg-gradient-to-br from-yellow-50/40 to-white">
-              <CardContent className="p-0 grid md:grid-cols-12 items-stretch">
-                {/* Date block */}
-                <div className="md:col-span-2 bg-[#1A1A1A] text-white flex flex-col items-center justify-center py-8 px-4">
-                  <div className="text-xs uppercase tracking-widest text-[#FFCE00] font-bold">{featuredEvent.date ? new Date(featuredEvent.date).toLocaleDateString('ar-EG-u-nu-latn', { month: 'short' }) : 'قريباً'}</div>
-                  <div className="text-5xl font-black my-1">{featuredEvent.date ? new Date(featuredEvent.date).getDate() : '•'}</div>
-                  <div className="text-xs text-white/60">{featuredEvent.date ? new Date(featuredEvent.date).getFullYear() : ''}</div>
-                </div>
-                {/* Image */}
-                {featuredEvent.coverImage && (
-                  <div className="md:col-span-4 h-48 md:h-auto overflow-hidden">
-                    <img src={featuredEvent.coverImage} alt={featuredEvent.title} className="w-full h-full object-cover" />
-                  </div>
-                )}
-                {/* Content */}
-                <div className="md:col-span-6 p-7 flex flex-col justify-center">
-                  <Badge className="bg-[#CC0000] text-white hover:bg-[#CC0000] w-fit mb-3 font-bold">فعالية مميّزة</Badge>
-                  <h3 className="text-2xl md:text-3xl font-black mb-2 leading-tight">{featuredEvent.title}</h3>
-                  <p className="text-neutral-600 text-sm mb-4 leading-relaxed line-clamp-3">{(featuredEvent.description || '').replace(/<[^>]+>/g, '').trim()}</p>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-700 mb-5">
-                    {featuredEvent.location && <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-[#CC0000]" />{featuredEvent.location}</span>}
-                    {featuredEvent.totalSeats > 0 && <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-[#CC0000]" />{featuredEvent.totalSeats - (featuredEvent.registeredCount || 0)} مقعد متبقي</span>}
-                  </div>
-                  <a href={`/activities/${featuredEvent.slug || featuredEvent.id}`} className="btn-primary px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 w-fit"><Calendar className="w-4 h-4" />سجّل في الفعالية<ArrowRight className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} /></a>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="text-center mt-14">
+            <button onClick={() => doAction('goto:contact')} className="btn-gold px-8 py-4 rounded-xl font-black text-base inline-flex items-center gap-2">
+              <ClipboardCheck className="w-5 h-5" />{lang === 'de' ? 'Mit Schritt 1 starten — kostenlos' : 'ابدأ بالخطوة الأولى — مجاناً'}
+            </button>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* ===== 4. ABOUT (image + text + 3 inline stats + CTA) ===== */}
       <section className="py-20 bg-[#FAFAF8]">
@@ -424,6 +439,41 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
         </section>
       )}
 
+      {/* ===== 6b. FEATURED EVENT (auto-pulled from latest activity) ===== */}
+      {featuredEvent && (
+        <section className="py-10 bg-white">
+          <div className="container mx-auto px-4">
+            <Card className="card-hover overflow-hidden border-2 border-[#FFCE00]/40 bg-gradient-to-br from-yellow-50/40 to-white">
+              <CardContent className="p-0 grid md:grid-cols-12 items-stretch">
+                {/* Date block */}
+                <div className="md:col-span-2 bg-[#1A1A1A] text-white flex flex-col items-center justify-center py-8 px-4">
+                  <div className="text-xs uppercase tracking-widest text-[#FFCE00] font-bold">{featuredEvent.date ? new Date(featuredEvent.date).toLocaleDateString('ar-EG-u-nu-latn', { month: 'short' }) : 'قريباً'}</div>
+                  <div className="text-5xl font-black my-1">{featuredEvent.date ? new Date(featuredEvent.date).getDate() : '•'}</div>
+                  <div className="text-xs text-white/60">{featuredEvent.date ? new Date(featuredEvent.date).getFullYear() : ''}</div>
+                </div>
+                {/* Image */}
+                {featuredEvent.coverImage && (
+                  <div className="md:col-span-4 h-48 md:h-auto overflow-hidden">
+                    <img src={featuredEvent.coverImage} alt={featuredEvent.title} className="w-full h-full object-cover" />
+                  </div>
+                )}
+                {/* Content */}
+                <div className="md:col-span-6 p-7 flex flex-col justify-center">
+                  <Badge className="bg-[#CC0000] text-white hover:bg-[#CC0000] w-fit mb-3 font-bold">فعالية مميّزة</Badge>
+                  <h3 className="text-2xl md:text-3xl font-black mb-2 leading-tight">{featuredEvent.title}</h3>
+                  <p className="text-neutral-600 text-sm mb-4 leading-relaxed line-clamp-3">{(featuredEvent.description || '').replace(/<[^>]+>/g, '').trim()}</p>
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-700 mb-5">
+                    {featuredEvent.location && <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-[#CC0000]" />{featuredEvent.location}</span>}
+                    {featuredEvent.totalSeats > 0 && <span className="flex items-center gap-1.5"><Users className="w-4 h-4 text-[#CC0000]" />{featuredEvent.totalSeats - (featuredEvent.registeredCount || 0)} مقعد متبقي</span>}
+                  </div>
+                  <a href={`/activities/${featuredEvent.slug || featuredEvent.id}`} className="btn-primary px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 w-fit"><Calendar className="w-4 h-4" />سجّل في الفعالية<ArrowRight className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} /></a>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+      )}
+
       {/* ===== 7. TESTIMONIALS ===== */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
@@ -462,9 +512,8 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
           <h2 className="text-3xl md:text-5xl font-black mb-4 max-w-3xl mx-auto leading-tight">{cta?.title || 'جاهز لبدء رحلتك إلى ألمانيا؟'}</h2>
           <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">{cta?.subtitle}</p>
           <div className="flex flex-wrap justify-center gap-3">
-            {cta?.button1?.enabled !== false && cta?.button1?.label && isActionEnabled(cta.button1.action) && (<button onClick={() => doAction(cta.button1.action)} className="btn-gold px-7 py-3.5 rounded-xl font-bold">{cta.button1.label}</button>)}
-            {cta?.button2?.enabled !== false && cta?.button2?.label && isActionEnabled(cta.button2.action) && (<button onClick={() => doAction(cta.button2.action)} className="px-7 py-3.5 rounded-xl bg-[#CC0000] hover:bg-[#A30000] text-white font-bold transition shadow-[0_6px_18px_-4px_rgba(204,0,0,0.55)] hover:-translate-y-0.5">{cta.button2.label}</button>)}
-            {cta?.button3?.enabled !== false && cta?.button3?.label && isActionEnabled(cta.button3.action) && (<button onClick={() => doAction(cta.button3.action)} className="px-7 py-3.5 rounded-xl bg-[#1A1A1A] hover:bg-[#333] text-white font-bold transition border border-white/20 shadow-lg hover:-translate-y-0.5 flex items-center gap-2"><Plane className="w-4 h-4" />{cta.button3.label}</button>)}
+            {cta?.button1?.enabled !== false && cta?.button1?.label && isActionEnabled(cta.button1.action) && (<button onClick={() => doAction(cta.button1.action)} className="btn-gold px-8 py-4 rounded-xl font-black text-lg shadow-[0_10px_30px_-8px_rgba(255,206,0,0.5)]">{cta.button1.label}</button>)}
+            {cta?.button3?.enabled !== false && cta?.button3?.label && isActionEnabled(cta.button3.action) && (<button onClick={() => doAction(cta.button3.action)} className="px-7 py-4 rounded-xl bg-transparent border-2 border-white/40 hover:border-white hover:bg-white/10 text-white font-bold transition flex items-center gap-2"><Plane className="w-4 h-4" />{cta.button3.label}</button>)}
           </div>
         </div>
       </section>
