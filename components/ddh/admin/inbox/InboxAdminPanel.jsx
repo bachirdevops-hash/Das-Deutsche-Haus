@@ -99,6 +99,12 @@ async function apiSend(url, method, body) {
 }
 
 export function InboxAdminPanel() {
+  const [counts, setCounts] = useState({})
+  const loadCounts = useCallback(async () => {
+    const r = await apiGet('/api/admin/inbox-counts')
+    setCounts(r.counts || {})
+  }, [])
+  useEffect(() => { loadCounts() }, [loadCounts])
   return (
     <ErrorBoundary>
       <section dir="rtl" className="container mx-auto px-4 py-8">
@@ -114,16 +120,18 @@ export function InboxAdminPanel() {
           <TabsList className="flex flex-wrap h-auto bg-white border rounded-2xl p-1.5 gap-1 mb-6">
             {RESOURCES.map(r => {
               const Ic = r.icon
+              const n = counts[r.key] || 0
               return (
                 <TabsTrigger key={r.key} value={r.key} className="data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white">
                   <Ic className="w-4 h-4 ms-1.5" />{r.label}
+                  {n > 0 && <span className="me-1.5 inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-[#CC0000] text-white text-[11px] font-black">{n}</span>}
                 </TabsTrigger>
               )
             })}
           </TabsList>
           {RESOURCES.map(r => (
             <TabsContent key={r.key} value={r.key}>
-              <LeadList resource={r} />
+              <LeadList resource={r} onChanged={loadCounts} />
             </TabsContent>
           ))}
         </Tabs>
@@ -132,7 +140,7 @@ export function InboxAdminPanel() {
   )
 }
 
-function LeadList({ resource }) {
+function LeadList({ resource, onChanged }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
@@ -151,11 +159,11 @@ function LeadList({ resource }) {
 
   const onDelete = async (id) => {
     const r = await apiSend(`/api/admin/${resource.key}/${id}`, 'DELETE')
-    if (r.error) toast.error(r.error); else { toast.success('تم الحذف'); load() }
+    if (r.error) toast.error(r.error); else { toast.success('تم الحذف'); load(); onChanged?.() }
   }
   const updateStatus = async (id, status) => {
     const r = await apiSend(`/api/admin/${resource.key}/${id}`, 'PATCH', { status })
-    if (r.error) toast.error(r.error); else { toast.success('تم التحديث'); load() }
+    if (r.error) toast.error(r.error); else { toast.success('تم التحديث'); load(); onChanged?.() }
   }
 
   const statusCounts = {

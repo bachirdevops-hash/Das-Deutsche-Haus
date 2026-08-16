@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'
+import { PhoneInput } from '@/components/ddh/PhoneInput'
 import { Globe, Menu, X, GraduationCap, Award, Briefcase, Plane, User, LogOut, BookOpen, Calendar, MapPin, Phone, Mail, MessageCircle, Star, Users, Trophy, CheckCircle2, Clock, Euro, ArrowRight, Building2, Send, Home as HomeIcon, LayoutDashboard, Info, ShieldCheck, Sparkles, Shield, Activity, DollarSign, UserPlus, Pencil, Trash2, Power, FileText, Video, Megaphone, ClipboardCheck, Plus, Save, Eye, EyeOff, Lock, UserCircle2, AlertTriangle, MessageSquare, Bell, Inbox, Copy, KeyRound, RefreshCw } from 'lucide-react'
 import { FileUpload, fileTypeIcon, ConfirmDialog, AccessDenied } from '@/components/ddh/shared'
 import { T } from '@/lib/translations'
@@ -687,6 +688,7 @@ function PublicLeadDialog({ kind, item, title, subtitle, endpoint, payload, user
   const [success, setSuccess] = useState(false)
   const submit = async (e) => {
     e.preventDefault()
+    if (!form.phone) { toast.error(lang === 'ar' ? 'يرجى إدخال رقم الهاتف' : 'Bitte geben Sie Ihre Telefonnummer ein.'); return }
     setSubmitting(true)
     try {
       const r = await fetch(endpoint, {
@@ -745,7 +747,7 @@ function PublicLeadDialog({ kind, item, title, subtitle, endpoint, payload, user
             </div>
             <div>
               <Label className="text-xs">{lang === 'ar' ? 'رقم الهاتف / WhatsApp' : 'Telefon / WhatsApp'} <span className="text-red-600">*</span></Label>
-              <Input required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+963 ..." dir="ltr" />
+              <PhoneInput lang={lang} defaultCode={lang === 'ar' ? '+963' : '+49'} value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
             </div>
             <div>
               <Label className="text-xs">{lang === 'ar' ? 'ملاحظات إضافية (اختياري)' : 'Anmerkungen (optional)'}</Label>
@@ -932,7 +934,7 @@ function AusbildungApplication({ lang, user, job }) {
                     </div>
                     <div>
                       <Label htmlFor="voc-phone">{L.phone} <span className="text-[#CC0000]">*</span></Label>
-                      <Input id="voc-phone" type="tel" dir="ltr" autoComplete="tel" inputMode="tel" value={form.phone} onChange={e => set('phone', e.target.value)} aria-invalid={!!errors.phone} aria-describedby={errors.phone ? 'voc-err-phone' : undefined} />
+                      <PhoneInput id="voc-phone" lang={lang} defaultCode={ar ? '+963' : '+49'} value={form.phone} onChange={(v) => set('phone', v)} invalid={!!errors.phone} describedBy={errors.phone ? 'voc-err-phone' : undefined} />
                       {fieldError('phone')}
                     </div>
                     <div>
@@ -987,6 +989,7 @@ function Travel({ t, lang, user }) {
   useEffect(() => { if (user) setForm(f => ({ ...f, name: user.name, email: user.email, phone: user.phone || '' })) }, [user])
   const submit = async (e) => {
     e.preventDefault()
+    if (!form.phone) { toast.error(lang === 'ar' ? 'يرجى إدخال رقم الهاتف' : 'Bitte geben Sie Ihre Telefonnummer ein.'); return }
     const r = await fetch('/api/travel/consultations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
     const d = await r.json()
     if (d.error) toast.error(d.error); else { toast.success(lang === 'ar' ? 'تم الحجز!' : 'Gebucht!'); setForm({ name: '', email: '', phone: '', visaType: 'study', preferredDate: '', notes: '' }) }
@@ -1007,7 +1010,7 @@ function Travel({ t, lang, user }) {
             <CardContent>
               <form onSubmit={submit} className="space-y-3">
                 <div><Label>{t.auth.name}</Label><Input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-                <div className="grid sm:grid-cols-2 gap-3"><div><Label>{t.auth.email}</Label><Input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div><div><Label>{t.auth.phone}</Label><Input required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div></div>
+                <div className="grid sm:grid-cols-2 gap-3"><div><Label>{t.auth.email}</Label><Input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div><div><Label>{t.auth.phone}</Label><PhoneInput lang={lang} defaultCode={lang === 'ar' ? '+963' : '+49'} value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} /></div></div>
                 <div><Label>{lang === 'ar' ? 'نوع التأشيرة' : 'Visa-Art'}</Label><Select value={form.visaType} onValueChange={(v) => setForm({ ...form, visaType: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{visas.map(v => <SelectItem key={v.k} value={v.k}>{lang === 'ar' ? v.t_ar : v.t_de}</SelectItem>)}</SelectContent></Select></div>
                 <div><Label>{lang === 'ar' ? 'التاريخ المفضل' : 'Wunschdatum'}</Label><Input type="date" value={form.preferredDate} onChange={e => setForm({ ...form, preferredDate: e.target.value })} /></div>
                 <div><Label>{lang === 'ar' ? 'ملاحظات' : 'Notizen'}</Label><Textarea rows={3} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>

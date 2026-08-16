@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { PhoneInput } from '@/components/ddh/PhoneInput'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -302,7 +303,7 @@ function ConsultationBookingForm({ consultations, user, lang = 'ar' }) {
             <div><Label>{L.name} *</Label><Input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
             <div className="grid sm:grid-cols-2 gap-3">
               <div><Label>{L.email} *</Label><Input type="email" dir="ltr" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-              <div><Label>{L.phone} *</Label><Input dir="ltr" required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+              <div><Label>{L.phone} *</Label><PhoneInput lang={lang} defaultCode={lang === 'ar' ? '+963' : '+49'} value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} /></div>
             </div>
             <div>
               <Label>{L.type}</Label>

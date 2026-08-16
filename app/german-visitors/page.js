@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
+import { PhoneInput } from '@/components/ddh/PhoneInput'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -450,7 +451,9 @@ function BookingForm({ packages }) {
   const [form, setForm] = useState({ name: '', email: '', phone: '', dateFrom: '', dateTo: '', travelers: 1, packageId: '', requests: '', source: '' })
   const [busy, setBusy] = useState(false)
   const submit = async (e) => {
-    e.preventDefault(); setBusy(true)
+    e.preventDefault()
+    if (!form.phone) { toast.error('Bitte geben Sie Ihre Telefonnummer ein.'); return }
+    setBusy(true)
     const r = await api.post('/api/german/bookings', form, { silent: true })
     setBusy(false)
     if (!r.ok) { toast.error(r.error || 'Fehler'); return }
@@ -469,7 +472,7 @@ function BookingForm({ packages }) {
           <div className="grid md:grid-cols-2 gap-4">
             <Field label="Vollständiger Name *"><Input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Field>
             <Field label="E-Mail *"><Input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></Field>
-            <Field label="Telefon / WhatsApp *"><Input required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+49 ..." /></Field>
+            <Field label="Telefon / WhatsApp *"><PhoneInput lang="de" defaultCode="+49" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} /></Field>
             <Field label="Anzahl Reisende"><Input type="number" min="1" max="20" value={form.travelers} onChange={e => setForm({ ...form, travelers: e.target.value })} /></Field>
             <Field label="Anreise"><Input type="date" value={form.dateFrom} onChange={e => setForm({ ...form, dateFrom: e.target.value })} /></Field>
             <Field label="Abreise"><Input type="date" value={form.dateTo} onChange={e => setForm({ ...form, dateTo: e.target.value })} /></Field>
@@ -500,7 +503,9 @@ function ServiceRequestForm() {
   const [busy, setBusy] = useState(false)
   const toggleService = (id) => setForm(p => ({ ...p, services: p.services.includes(id) ? p.services.filter(s => s !== id) : [...p.services, id] }))
   const submit = async (e) => {
-    e.preventDefault(); setBusy(true)
+    e.preventDefault()
+    if (!form.whatsapp) { toast.error('Bitte geben Sie Ihre WhatsApp-Nummer ein.'); return }
+    setBusy(true)
     const r = await api.post('/api/german/service-requests', form, { silent: true })
     setBusy(false)
     if (!r.ok) { toast.error(r.error || 'Fehler'); return }
@@ -519,7 +524,7 @@ function ServiceRequestForm() {
           <div className="grid md:grid-cols-2 gap-4">
             <Field label="Vollständiger Name *"><Input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Field>
             <Field label="E-Mail *"><Input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></Field>
-            <Field label="WhatsApp (mit Ländercode) *"><Input required value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} placeholder="+49 ..." /></Field>
+            <Field label="WhatsApp (mit Ländercode) *"><PhoneInput lang="de" defaultCode="+49" value={form.whatsapp} onChange={(v) => setForm({ ...form, whatsapp: v })} /></Field>
             <Field label="Aktueller Standort">
               <Select value={form.location || 'none'} onValueChange={v => setForm({ ...form, location: v === 'none' ? '' : v })}>
                 <SelectTrigger><SelectValue placeholder="Bitte wählen..." /></SelectTrigger>

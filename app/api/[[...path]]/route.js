@@ -1087,6 +1087,17 @@ async function handle(request, { params }) {
         }
       }
       // ===== UNIFIED INBOX — leads (course_registrations, vocational, travel) =====
+      // GET /api/admin/inbox-counts → NEW/unhandled items per inbox tab (for tab badges)
+      if (segs[1] === 'inbox-counts' && method === 'GET') {
+        const fresh = [{ status: 'new' }, { status: { $exists: false } }, { status: null }, { status: 'submitted' }]
+        const [cr, va, tc, cm] = await Promise.all([
+          db.collection('course_registrations').countDocuments({ $or: fresh }),
+          db.collection('vocational_applications').countDocuments({ $or: fresh }),
+          db.collection('travel_consultations').countDocuments({ $or: [...fresh, { status: 'confirmed' }] }),
+          db.collection('contact_messages').countDocuments({ $or: fresh }),
+        ])
+        return ok({ counts: { 'course-registrations': cr, 'vocational-applications': va, 'travel-consultations': tc, 'contact-messages': cm } })
+      }
       const LEAD_COLLECTIONS = {
         'course-registrations': { coll: 'course_registrations', label: 'تسجيل كورس' },
         'vocational-applications': { coll: 'vocational_applications', label: 'طلب Ausbildung' },
