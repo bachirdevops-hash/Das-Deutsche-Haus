@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Save, Plus, Pencil, Trash2, ArrowUp, ArrowDown, Home as HomeIcon, Info, Plane, Users, Sparkles, MessageSquare, Award, HelpCircle, Clock, Star, Image as ImageIcon } from 'lucide-react'
+import { Save, Plus, Pencil, Trash2, ArrowUp, ArrowDown, Home as HomeIcon, Info, Plane, Users, Sparkles, MessageSquare, Award, HelpCircle, Clock, Star, Image as ImageIcon, Share2 } from 'lucide-react'
 import { FileUpload, ConfirmDialog } from '@/components/ddh/shared'
 import { ErrorBoundary } from '@/components/ddh/ErrorBoundary'
 
@@ -42,11 +42,23 @@ export function SiteContentAdminPanel() {
             <TabsTrigger value="home" className="data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white"><HomeIcon className="w-4 h-4 ms-1.5" />الصفحة الرئيسية</TabsTrigger>
             <TabsTrigger value="about" className="data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white"><Info className="w-4 h-4 ms-1.5" />عن المعهد</TabsTrigger>
             <TabsTrigger value="visa" className="data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white"><Plane className="w-4 h-4 ms-1.5" />التأشيرات</TabsTrigger>
+            <TabsTrigger value="social" className="data-[state=active]:bg-[#1A1A1A] data-[state=active]:text-white"><Share2 className="w-4 h-4 ms-1.5" />التواصل الاجتماعي</TabsTrigger>
           </TabsList>
 
           <TabsContent value="home"><HomeContentManager /></TabsContent>
           <TabsContent value="about"><AboutContentManager /></TabsContent>
           <TabsContent value="visa"><VisaContentManager /></TabsContent>
+          <TabsContent value="social">
+            <SimpleSectionEditor contentKey="social_links" title="روابط مواقع التواصل الاجتماعي — تظهر في أسفل الموقع تحت (تواصل معنا). اترك أي حقل فارغاً ولن تظهر أيقونته." fields={[
+              { name: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/...' },
+              { name: 'facebook', label: 'Facebook', placeholder: 'https://facebook.com/...' },
+              { name: 'tiktok', label: 'TikTok', placeholder: 'https://tiktok.com/@...' },
+              { name: 'youtube', label: 'YouTube', placeholder: 'https://youtube.com/@...' },
+              { name: 'linkedin', label: 'LinkedIn', placeholder: 'https://linkedin.com/company/...' },
+              { name: 'x', label: 'X (Twitter)', placeholder: 'https://x.com/...' },
+              { name: 'telegram', label: 'Telegram', placeholder: 'https://t.me/...' },
+            ]} />
+          </TabsContent>
         </Tabs>
       </section>
     </ErrorBoundary>
