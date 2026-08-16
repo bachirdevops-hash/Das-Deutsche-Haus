@@ -239,26 +239,26 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
             )}
             <h1 className="text-4xl md:text-6xl font-black leading-tight mb-5 tracking-tight">
               {lang === 'de'
-                ? <>Deutsch lernen, <span className="text-[#FFCE00]">Ausbildung</span> sichern — Zukunft in Deutschland aufbauen.</>
-                : <>تعلّم الألمانية، احصل على <span className="text-[#FFCE00]">Ausbildung</span>، وابنِ مستقبلك في ألمانيا.</>}
+                ? <>Deutsch lernen, <span className="text-[#FFCE00]">Ausbildung</span> sichern — und nach Deutschland reisen.</>
+                : <>تعلّم الألمانية، احصل على <span className="text-[#FFCE00]">Ausbildung</span>، وسافر إلى ألمانيا.</>}
             </h1>
             <p className="text-lg md:text-xl text-white/90 mb-8 leading-relaxed max-w-2xl">
               {lang === 'de'
-                ? 'Kurse, anerkannte Zertifikate und persönliche Beratung — wir begleiten dich Schritt für Schritt bis nach Deutschland.'
-                : 'كورسات لغة، شهادات معتمدة، واستشارات شخصية — نرافقك خطوة بخطوة من أول درس حتى وصولك إلى ألمانيا.'}
+                ? 'Online-Sprachkurse und persönliche Beratung — wir begleiten dich Schritt für Schritt bis nach Deutschland.'
+                : 'كورسات لغة أونلاين واستشارات شخصية — نرافقك خطوة بخطوة من أول درس حتى وصولك إلى ألمانيا.'}
             </p>
             <div className="flex flex-wrap items-center gap-3 mb-8">
-              <button onClick={() => doAction('goto:courses')} className="btn-primary px-8 py-4 rounded-xl font-black text-lg flex items-center gap-2 shadow-[0_10px_30px_-8px_rgba(204,0,0,0.7)]">
-                <GraduationCap className="w-6 h-6" />{lang === 'de' ? 'Starte deine Reise' : 'ابدأ رحلتك الآن'}<ArrowRight className={`w-5 h-5 ${lang === 'ar' ? 'rotate-180' : ''}`} />
+              <button onClick={() => doAction('href:/visa-types#booking')} className="btn-primary px-8 py-4 rounded-xl font-black text-lg flex items-center gap-2 shadow-[0_10px_30px_-8px_rgba(204,0,0,0.7)]">
+                <Plane className="w-6 h-6" />{lang === 'de' ? 'Beratung buchen' : 'احجز استشارة'}<ArrowRight className={`w-5 h-5 ${lang === 'ar' ? 'rotate-180' : ''}`} />
               </button>
-              <button onClick={() => doAction('href:/visa-types#booking')} className="px-6 py-4 rounded-xl bg-transparent border-2 border-white/50 text-white font-bold flex items-center gap-2 hover:bg-white/10 hover:border-white transition">
-                <Plane className="w-5 h-5" />{lang === 'de' ? 'Kostenlose Beratung' : 'احجز استشارة مجانية'}
+              <button onClick={() => doAction('goto:courses')} className="px-6 py-4 rounded-xl bg-transparent border-2 border-white/50 text-white font-bold flex items-center gap-2 hover:bg-white/10 hover:border-white transition">
+                <GraduationCap className="w-5 h-5" />{lang === 'de' ? 'Kurse ansehen' : 'تصفح الكورسات'}
               </button>
             </div>
             {/* Trust chips */}
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/85">
               <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#FFCE00]" />{lang === 'de' ? `${new Date().getFullYear() - 2018}+ Jahre Erfahrung` : `${new Date().getFullYear() - 2018}+ سنوات خبرة`}</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#FFCE00]" />{lang === 'de' ? 'Anerkannte Zertifikate' : 'شهادات معتمدة'}</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#FFCE00]" />{lang === 'de' ? 'Live-Onlinekurse' : 'كورسات أونلاين مباشرة'}</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#FFCE00]" />{lang === 'de' ? 'Begleitung bis Deutschland' : 'مرافقة كاملة حتى ألمانيا'}</span>
             </div>
           </div>
@@ -271,10 +271,10 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
         <div className="container mx-auto px-4">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { icon: BookOpen, color: '#CC0000', title: lang === 'de' ? 'Deutschkurse A1–C2' : 'كورسات اللغة الألمانية', desc: lang === 'de' ? 'Alle Niveaus, kleine Gruppen, flexible Zeiten.' : 'من A1 حتى C2 — مجموعات صغيرة وجدول مرن.', action: 'goto:courses', cta: lang === 'de' ? 'Kurse ansehen' : 'تصفح الكورسات' },
+              { icon: BookOpen, color: '#CC0000', title: lang === 'de' ? 'Deutschkurse A1–C2' : 'كورسات اللغة الألمانية', desc: lang === 'de' ? 'Alle Niveaus — online, kleine Gruppen, flexible Zeiten.' : 'من A1 حتى C2 — أونلاين، مجموعات صغيرة وجدول مرن.', action: 'goto:courses', cta: lang === 'de' ? 'Kurse ansehen' : 'تصفح الكورسات' },
               { icon: Briefcase, color: '#2C5F9E', title: 'Ausbildung & Weiterbildung', desc: lang === 'de' ? 'Vom Sprachkurs zum Ausbildungsvertrag in Deutschland.' : 'من كورس اللغة إلى عقد تدريب مهني في ألمانيا.', action: 'goto:vocational', cta: lang === 'de' ? 'Berufe entdecken' : 'اكتشف المهن' },
               { icon: Plane, color: '#B8860B', title: lang === 'de' ? 'Studien- & Reiseberatung' : 'استشارات الدراسة والسفر', desc: lang === 'de' ? 'Visum, Zulassung und Unterlagen — persönlich beraten.' : 'فيزا، قبول جامعي، وتجهيز الأوراق — باستشارة شخصية.', action: 'goto:travel', cta: lang === 'de' ? 'Beratung buchen' : 'احجز استشارة' },
-              { icon: Building2, color: '#1A1A1A', title: lang === 'de' ? 'Vorbereitung auf die Arbeit' : 'التحضير للعمل في ألمانيا', desc: lang === 'de' ? 'Bewerbung, Anerkennung und der erste Job.' : 'السيرة الذاتية، معادلة الشهادات، وأول وظيفة.', action: 'href:/visa-types#booking', cta: lang === 'de' ? 'Mehr erfahren' : 'اعرف أكثر' },
+              { icon: Building2, color: '#1A1A1A', title: lang === 'de' ? 'Vorbereitung auf die Arbeit' : 'التحضير للعمل في ألمانيا', desc: lang === 'de' ? 'Bewerbung und Vorbereitung auf den deutschen Arbeitsmarkt.' : 'السيرة الذاتية، التقديم، والاستعداد لسوق العمل الألماني.', action: 'href:/visa-types#booking', cta: lang === 'de' ? 'Mehr erfahren' : 'اعرف أكثر' },
             ].map((s, i) => {
               const Ic = s.icon
               return (
@@ -311,10 +311,10 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
             <div className="hidden md:block absolute top-7 right-[10%] left-[10%] h-px bg-white/20" />
             <div className="grid grid-cols-2 md:grid-cols-5 gap-x-4 gap-y-10">
               {[
-                { n: lang === 'de' ? '1' : '١', title: lang === 'de' ? 'Einstufungstest' : 'اختبار تحديد المستوى', desc: lang === 'de' ? 'Kostenlos & online, 15 Min.' : 'مجاني وأونلاين، بياخد 15 دقيقة.' },
-                { n: lang === 'de' ? '2' : '٢', title: lang === 'de' ? 'Passender Kurs' : 'تسجيل بالكورس المناسب', desc: lang === 'de' ? 'Kleine Gruppen, flexibel.' : 'مجموعات صغيرة، جدول مرن.' },
-                { n: lang === 'de' ? '3' : '٣', title: lang === 'de' ? 'Lernen & Betreuung' : 'دراسة ومتابعة', desc: lang === 'de' ? 'Tests & persönliches Feedback.' : 'اختبارات دورية ومتابعة فردية.' },
-                { n: lang === 'de' ? '4' : '٤', title: lang === 'de' ? 'Anerkanntes Zertifikat' : 'شهادة معتمدة', desc: lang === 'de' ? 'Bereit für Arbeit & Studium.' : 'جاهزة لسوق العمل أو الجامعات الألمانية.' },
+                { n: lang === 'de' ? '1' : '١', title: lang === 'de' ? 'Einstufungstest' : 'اختبار تحديد المستوى', desc: lang === 'de' ? 'Online.' : 'أونلاين.' },
+                { n: lang === 'de' ? '2' : '٢', title: lang === 'de' ? 'Passender Kurs' : 'تسجيل بالكورس المناسب', desc: lang === 'de' ? 'Kleine Gruppen, flexibel — nur online.' : 'مجموعات صغيرة، جدول مرن — أونلاين فقط.' },
+                { n: lang === 'de' ? '3' : '٣', title: lang === 'de' ? 'Lernen & Betreuung' : 'دراسة ومتابعة', desc: lang === 'de' ? 'Persönliche Betreuung.' : 'متابعة فردية.' },
+                { n: lang === 'de' ? '4' : '٤', title: lang === 'de' ? 'Prüfungsvorbereitung' : 'التحضير للامتحان الرسمي', desc: lang === 'de' ? 'Wir machen dich fit für die offizielle Sprachprüfung.' : 'نجهّزك بالكامل لتقديم امتحان اللغة والحصول على شهادتك.' },
                 { n: lang === 'de' ? '5' : '٥', title: lang === 'de' ? 'Reiseberatung' : 'استشارة السفر', desc: lang === 'de' ? 'Visum, Ausbildung oder Zulassung.' : 'فيزا، Ausbildung، أو قبول جامعي.' },
               ].map((st, i) => (
                 <div key={i} className="text-center relative">
@@ -327,7 +327,7 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
           </div>
           <div className="text-center mt-14">
             <button onClick={() => doAction('goto:contact')} className="btn-gold px-8 py-4 rounded-xl font-black text-base inline-flex items-center gap-2">
-              <ClipboardCheck className="w-5 h-5" />{lang === 'de' ? 'Mit Schritt 1 starten — kostenlos' : 'ابدأ بالخطوة الأولى — مجاناً'}
+              <ClipboardCheck className="w-5 h-5" />{lang === 'de' ? 'Mit Schritt 1 starten' : 'ابدأ بالخطوة الأولى'}
             </button>
           </div>
         </div>
