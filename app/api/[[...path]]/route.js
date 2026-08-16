@@ -915,6 +915,7 @@ async function handle(request, { params }) {
         'course-registrations': { coll: 'course_registrations', label: 'تسجيل كورس' },
         'vocational-applications': { coll: 'vocational_applications', label: 'طلب Ausbildung' },
         'travel-consultations': { coll: 'travel_consultations', label: 'استشارة سفر' },
+        'contact-messages':     { coll: 'contact_messages',     label: 'رسالة تواصل' },
       }
       if (LEAD_COLLECTIONS[segs[1]]) {
         const { coll } = LEAD_COLLECTIONS[segs[1]]

@@ -18,6 +18,7 @@ const RESOURCES = [
   { key: 'course-registrations', label: 'تسجيلات الكورسات', icon: BookOpen, color: '#CC0000', titleField: (it) => it.courseName || it.level || 'كورس' },
   { key: 'vocational-applications', label: 'طلبات Ausbildung', icon: Briefcase, color: '#2C5F9E', titleField: (it) => it.jobTitle || 'تدريب مهني' },
   { key: 'travel-consultations', label: 'استشارات سفر', icon: Plane, color: '#1A1A1A', titleField: (it) => it.consultationTypeName || it.visaType || 'استشارة' },
+  { key: 'contact-messages', label: 'رسائل التواصل', icon: MessageSquare, color: '#9333ea', noConvert: true, titleField: (it) => (it.message || '').slice(0, 60) || 'رسالة' },
 ]
 
 async function apiGet(url) { const r = await fetch(url, { credentials: 'include' }); return r.json() }
@@ -35,7 +36,7 @@ export function InboxAdminPanel() {
             <Inbox className="w-8 h-8 text-[#CC0000]" />
             <h2 className="text-3xl font-black tracking-tight">صندوق الواردات الموحّد</h2>
           </div>
-          <p className="text-sm text-neutral-600">كل الطلبات الواردة من نماذج الموقع — تسجيلات الكورسات، طلبات Ausbildung، استشارات السفر. اعتمد الطلب لإنشاء حساب طالب تلقائياً.</p>
+          <p className="text-sm text-neutral-600">كل الطلبات الواردة من نماذج الموقع — تسجيلات الكورسات، طلبات Ausbildung، استشارات السفر، ورسائل تواصل معنا. اعتمد الطلب لإنشاء حساب طالب تلقائياً.</p>
         </div>
 
         <Tabs defaultValue={RESOURCES[0].key}>
@@ -140,7 +141,7 @@ function LeadList({ resource }) {
                 </div>
                 <div className="md:col-span-4 flex gap-1.5 justify-end flex-wrap">
                   <Button size="sm" variant="outline" onClick={() => setViewing(item)}><Eye className="w-3.5 h-3.5 ms-1" />عرض</Button>
-                  {item.status !== 'converted' && item.email && (
+                  {!resource.noConvert && item.status !== 'converted' && item.email && (
                     <ConvertToUserButton resource={resource.key} item={item} onConverted={load} />
                   )}
                   <Select value={item.status || 'new'} onValueChange={(v) => updateStatus(item.id, v)}>
