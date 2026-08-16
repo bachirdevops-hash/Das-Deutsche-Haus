@@ -1,7 +1,7 @@
 import './globals.css'
 import { Toaster } from 'sonner'
 
-const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://dasdeutschehaus.com'
+const SITE_URL = (process.env.NEXT_PUBLIC_BASE_URL || 'https://www.das-deutsche-haus.com').replace(/\/+$/, '')
 const OG_IMAGE = 'https://customer-assets.emergentagent.com/job_telc-academy/artifacts/r4py5i7f_22266621-baa3-4a90-98dd-0438a1e69c1d%20%281%29.png'
 
 export const metadata = {
@@ -32,10 +32,6 @@ export const metadata = {
   },
   alternates: {
     canonical: '/',
-    languages: {
-      ar: '/',
-      de: '/?lang=de',
-    },
   },
   openGraph: {
     type: 'website',
@@ -94,12 +90,17 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="preload" as="image" href="https://images.unsplash.com/photo-1659342126732-98ab9efd9ce0?auto=format&fit=crop&w=1920&q=70" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
       <body className="antialiased bg-[#FAFAF8] text-[#1A1A1A]">
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:right-2 focus:z-[100] focus:bg-[#1A1A1A] focus:text-white focus:px-4 focus:py-2 focus:rounded-lg">تخطّ إلى المحتوى الرئيسي</a>
         {children}
         <Toaster position="top-center" richColors closeButton />
       </body>

@@ -127,7 +127,7 @@ function ActivityCard({ a }) {
     <a href={`/activities/${a.slug}`} className="group bg-white rounded-2xl border border-neutral-200 overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition flex flex-col">
       <div className="relative aspect-[16/10] overflow-hidden bg-neutral-100">
         {a.coverImage ? (
-          <img src={a.coverImage} alt={a.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition duration-700" />
+          <img loading="lazy" decoding="async" src={a.coverImage} alt={a.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition duration-700" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-[#CC0000] to-[#FFCE00] flex items-center justify-center text-6xl">{t.icon}</div>
         )}

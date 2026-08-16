@@ -150,7 +150,7 @@ function PostCard({ p, lang, t }) {
     <a href={`/blog/${p.slug}`} className="group bg-white rounded-2xl border border-neutral-200 overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition flex flex-col">
       {p.coverImage && (
         <div className="relative aspect-[16/10] overflow-hidden bg-neutral-100">
-          <img src={p.coverImage} alt={p.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition duration-700" />
+          <img loading="lazy" decoding="async" src={p.coverImage} alt={p.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition duration-700" />
           <span className={`absolute top-3 ${postLang === 'ar' ? 'right-3' : 'left-3'} px-2.5 py-1 rounded-full text-[10px] font-bold border ${getCategoryColor(p.category)}`}>{getCategoryLabel(p.category, lang)}</span>
           <span className={`absolute top-3 ${postLang === 'ar' ? 'left-3' : 'right-3'} px-2 py-1 rounded-full text-[10px] font-bold bg-black/70 text-white backdrop-blur`}>{postLang === 'ar' ? '🇸🇾 AR' : '🇩🇪 DE'}</span>
         </div>
@@ -160,7 +160,7 @@ function PostCard({ p, lang, t }) {
         <p className="text-sm text-neutral-600 leading-relaxed line-clamp-3 flex-1 mb-4">{p.excerpt}</p>
         <div className="flex items-center justify-between text-xs text-neutral-500 pt-3 border-t">
           <div className="flex items-center gap-2">
-            {p.author?.photo ? <img src={p.author.photo} alt="" className="w-6 h-6 rounded-full object-cover" /> : <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#CC0000] to-[#FFCE00] flex items-center justify-center text-white text-[9px] font-black">{initials}</div>}
+            {p.author?.photo ? <img loading="lazy" decoding="async" src={p.author.photo} alt="" className="w-6 h-6 rounded-full object-cover" /> : <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#CC0000] to-[#FFCE00] flex items-center justify-center text-white text-[9px] font-black">{initials}</div>}
             <span className="font-semibold truncate max-w-[120px]">{p.author?.name}</span>
           </div>
           <div className="flex items-center gap-3">

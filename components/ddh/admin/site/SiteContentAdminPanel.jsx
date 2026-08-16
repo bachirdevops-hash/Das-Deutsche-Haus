@@ -151,6 +151,7 @@ function HomeHeroEditor() {
         <div className="grid sm:grid-cols-2 gap-3">
           <div><Label className="text-xs">شارة Hero (نص)</Label><Input value={data.badge || ''} onChange={e => setData({ ...data, badge: e.target.value })} placeholder="تسجيلات سبتمبر 2026 — مفتوحة الآن" /></div>
           <div><Label className="text-xs">شارة صغيرة (Pin)</Label><Input value={data.badgePin || ''} onChange={e => setData({ ...data, badgePin: e.target.value })} placeholder="جديد" /></div>
+          <div className="sm:col-span-2"><Label className="text-xs">🇩🇪 Badge (Deutsch) — يظهر بالنسخة الألمانية</Label><Input dir="ltr" value={data.badge_de || ''} onChange={e => setData({ ...data, badge_de: e.target.value })} placeholder="Anmeldungen für September 2026 — jetzt offen" /></div>
         </div>
 
         {/* 🆕 Bilingual Title */}
@@ -171,9 +172,11 @@ function HomeHeroEditor() {
         </div>
 
         <div className="grid sm:grid-cols-2 gap-3 pt-3 border-t">
-          <div><Label className="text-xs">زر 1 - النص</Label><Input value={data.cta1Label || ''} onChange={e => setData({ ...data, cta1Label: e.target.value })} placeholder="سجّل في كورس" /></div>
+          <div><Label className="text-xs">زر 1 - النص (عربي)</Label><Input value={data.cta1Label || ''} onChange={e => setData({ ...data, cta1Label: e.target.value })} placeholder="احجز استشارة" /></div>
+          <div><Label className="text-xs">🇩🇪 زر 1 - Text</Label><Input dir="ltr" value={data.cta1Label_de || ''} onChange={e => setData({ ...data, cta1Label_de: e.target.value })} placeholder="Beratung buchen" /></div>
           <div><Label className="text-xs">زر 1 - الإجراء</Label><Input value={data.cta1Action || ''} onChange={e => setData({ ...data, cta1Action: e.target.value })} placeholder="goto:courses" /></div>
-          <div><Label className="text-xs">زر 2 - النص</Label><Input value={data.cta2Label || ''} onChange={e => setData({ ...data, cta2Label: e.target.value })} placeholder="تواصل معنا" /></div>
+          <div><Label className="text-xs">زر 2 - النص (عربي)</Label><Input value={data.cta2Label || ''} onChange={e => setData({ ...data, cta2Label: e.target.value })} placeholder="تصفح الكورسات" /></div>
+          <div><Label className="text-xs">🇩🇪 زر 2 - Text</Label><Input dir="ltr" value={data.cta2Label_de || ''} onChange={e => setData({ ...data, cta2Label_de: e.target.value })} placeholder="Kurse ansehen" /></div>
           <div><Label className="text-xs">زر 2 - الإجراء</Label><Input value={data.cta2Action || ''} onChange={e => setData({ ...data, cta2Action: e.target.value })} placeholder="goto:contact" /></div>
           <div><Label className="text-xs">زر 3 - النص (اتركه فارغ لإخفائه)</Label><Input value={data.cta3Label || ''} onChange={e => setData({ ...data, cta3Label: e.target.value })} placeholder="احجز استشارة" /></div>
           <div><Label className="text-xs">زر 3 - الإجراء</Label><Input value={data.cta3Action || ''} onChange={e => setData({ ...data, cta3Action: e.target.value })} placeholder="href:/visa-types#booking" /></div>

@@ -25,16 +25,19 @@ import { Footer } from '@/components/ddh/layout/Footer'
 import { WhatsAppFloat } from '@/components/ddh/layout/WhatsAppFloat'
 import { AuthDialog } from '@/components/ddh/auth/AuthDialog'
 import { ResetPasswordDialog } from '@/components/ddh/auth/ResetPasswordDialog'
-import { GermanAdminPanel } from '@/components/ddh/admin/german/GermanAdminPanel'
-import { BlogAdminPanel } from '@/components/ddh/admin/blog/BlogAdminPanel'
-import { ActivitiesAdminPanel } from '@/components/ddh/admin/activities/ActivitiesAdminPanel'
-import { LegalPagesAdminPanel } from '@/components/ddh/admin/legal/LegalPagesAdminPanel'
-import { SiteContentAdminPanel } from '@/components/ddh/admin/site/SiteContentAdminPanel'
-import { InboxAdminPanel } from '@/components/ddh/admin/inbox/InboxAdminPanel'
-import { EmailLogsAdminPanel } from '@/components/ddh/admin/email/EmailLogsAdminPanel'
-import CoursesAdminPanel from '@/components/ddh/admin/courses/CoursesAdminPanel'
-import JobsAdminPanel from '@/components/ddh/admin/jobs/JobsAdminPanel'
-import FeatureFlagsAdminPanel from '@/components/ddh/admin/features/FeatureFlagsAdminPanel'
+import dynamic from 'next/dynamic'
+// ⚡ Admin panels are lazy-loaded — public visitors never download this code
+const AdminLoading = () => <div className="py-16 text-center text-neutral-400 text-sm">جاري تحميل اللوحة...</div>
+const GermanAdminPanel = dynamic(() => import('@/components/ddh/admin/german/GermanAdminPanel').then(m => m.GermanAdminPanel), { ssr: false, loading: AdminLoading })
+const BlogAdminPanel = dynamic(() => import('@/components/ddh/admin/blog/BlogAdminPanel').then(m => m.BlogAdminPanel), { ssr: false, loading: AdminLoading })
+const ActivitiesAdminPanel = dynamic(() => import('@/components/ddh/admin/activities/ActivitiesAdminPanel').then(m => m.ActivitiesAdminPanel), { ssr: false, loading: AdminLoading })
+const LegalPagesAdminPanel = dynamic(() => import('@/components/ddh/admin/legal/LegalPagesAdminPanel').then(m => m.LegalPagesAdminPanel), { ssr: false, loading: AdminLoading })
+const SiteContentAdminPanel = dynamic(() => import('@/components/ddh/admin/site/SiteContentAdminPanel').then(m => m.SiteContentAdminPanel), { ssr: false, loading: AdminLoading })
+const InboxAdminPanel = dynamic(() => import('@/components/ddh/admin/inbox/InboxAdminPanel').then(m => m.InboxAdminPanel), { ssr: false, loading: AdminLoading })
+const EmailLogsAdminPanel = dynamic(() => import('@/components/ddh/admin/email/EmailLogsAdminPanel').then(m => m.EmailLogsAdminPanel), { ssr: false, loading: AdminLoading })
+const CoursesAdminPanel = dynamic(() => import('@/components/ddh/admin/courses/CoursesAdminPanel'), { ssr: false, loading: AdminLoading })
+const JobsAdminPanel = dynamic(() => import('@/components/ddh/admin/jobs/JobsAdminPanel'), { ssr: false, loading: AdminLoading })
+const FeatureFlagsAdminPanel = dynamic(() => import('@/components/ddh/admin/features/FeatureFlagsAdminPanel'), { ssr: false, loading: AdminLoading })
 import { useFeatureFlags } from '@/lib/useFeatureFlags'
 import { getIcon, fetchContent, fetchList } from '@/lib/content'
 import { DEFAULT_HOME_HERO, DEFAULT_HOME_SERVICES, DEFAULT_HOME_JOURNEY } from '@/lib/site_content_seed'
@@ -152,7 +155,7 @@ function App() {
   return (
     <div dir={t.dir} className="min-h-screen bg-[#FAFAF8] text-[#1A1A1A]">
       <Header t={t} lang={lang} setLang={setLang} page={page} goto={goto} user={user} navOpen={navOpen} setNavOpen={setNavOpen} setAuthMode={setAuthMode} logout={logout} flags={flags} />
-      <main className="pt-20">
+      <main id="main-content" className="pt-20">
         <ErrorBoundary>
           {page === 'home' && <Home t={t} lang={lang} goto={goto} setAuthMode={setAuthMode} user={user} flags={flags} />}
           {page === 'courses' && <Courses t={t} lang={lang} user={user} setAuthMode={setAuthMode} />}
@@ -243,10 +246,10 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
         <div className="absolute top-0 right-0 left-0 h-2 flag-gradient-h z-10" />
         <div className="container mx-auto px-4 relative z-10 py-20">
           <div className="max-w-3xl text-white fade-in">
-            {hero?.badge && (
+            {(lang === 'de' ? hero?.badge_de : hero?.badge) && (
               <div className="inline-flex items-center gap-2 mb-5 bg-white/15 backdrop-blur-md border border-white/25 rounded-full ps-2 pe-4 py-1.5 text-sm">
-                {hero?.badgePin && <span className="bg-[#CC0000] text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-full">{hero.badgePin}</span>}
-                <span className="font-semibold">{hero.badge}</span>
+                {hero?.badgePin && lang === 'ar' && <span className="bg-[#CC0000] text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-full">{hero.badgePin}</span>}
+                <span className="font-semibold">{lang === 'de' ? hero.badge_de : hero.badge}</span>
               </div>
             )}
             <h1 className="text-4xl md:text-6xl font-black leading-tight mb-5 tracking-tight">
@@ -257,10 +260,10 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
             </p>
             <div className="flex flex-wrap items-center gap-3 mb-8">
               <button onClick={() => doAction(hero?.cta1Action || DEFAULT_HOME_HERO.cta1Action)} className="btn-primary px-8 py-4 rounded-xl font-black text-lg flex items-center gap-2 shadow-[0_10px_30px_-8px_rgba(204,0,0,0.7)]">
-                <Plane className="w-6 h-6" />{hero?.cta1Label || (lang === 'de' ? 'Beratung buchen' : DEFAULT_HOME_HERO.cta1Label)}<ArrowRight className={`w-5 h-5 ${lang === 'ar' ? 'rotate-180' : ''}`} />
+                <Plane className="w-6 h-6" />{lang === 'de' ? (hero?.cta1Label_de || 'Beratung buchen') : (hero?.cta1Label || DEFAULT_HOME_HERO.cta1Label)}<ArrowRight className={`w-5 h-5 ${lang === 'ar' ? 'rotate-180' : ''}`} />
               </button>
               <button onClick={() => doAction(hero?.cta2Action || DEFAULT_HOME_HERO.cta2Action)} className="px-6 py-4 rounded-xl bg-transparent border-2 border-white/50 text-white font-bold flex items-center gap-2 hover:bg-white/10 hover:border-white transition">
-                <GraduationCap className="w-5 h-5" />{hero?.cta2Label || (lang === 'de' ? 'Kurse ansehen' : DEFAULT_HOME_HERO.cta2Label)}
+                <GraduationCap className="w-5 h-5" />{lang === 'de' ? (hero?.cta2Label_de || 'Kurse ansehen') : (hero?.cta2Label || DEFAULT_HOME_HERO.cta2Label)}
               </button>
             </div>
             {/* Trust chips */}
@@ -355,7 +358,7 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
             </div>
             <div className="order-1 lg:order-2 relative">
               <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl">
-                <img src={CLASS_IMG} alt="حياة الدراسة" className="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" src={CLASS_IMG} alt="حياة الدراسة" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-tr from-[#1A1A1A]/30 to-transparent" />
               </div>
               {/* Floating badge */}
@@ -408,7 +411,7 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
                 <Card key={c.id} className="card-hover overflow-hidden group bg-white">
                   <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-[#1A1A1A] to-[#CC0000]">
                     {c.coverImage ? (
-                      <img src={c.coverImage} alt={c.title_ar} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <img loading="lazy" decoding="async" src={c.coverImage} alt={c.title_ar} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white text-5xl font-black opacity-30">{c.level}</div>
                     )}
@@ -452,7 +455,7 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
                 {/* Image */}
                 {featuredEvent.coverImage && (
                   <div className="md:col-span-4 h-48 md:h-auto overflow-hidden">
-                    <img src={featuredEvent.coverImage} alt={featuredEvent.title} className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={featuredEvent.coverImage} alt={featuredEvent.title} className="w-full h-full object-cover" />
                   </div>
                 )}
                 {/* Content */}
@@ -534,7 +537,7 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
                   <Card className="card-hover overflow-hidden h-full">
                     {p.coverImage && (
                       <div className="aspect-[16/10] overflow-hidden bg-neutral-100">
-                        <img src={p.coverImage} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <img loading="lazy" decoding="async" src={p.coverImage} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       </div>
                     )}
                     <CardContent className="p-5">
@@ -572,7 +575,7 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
                   <Card className="card-hover overflow-hidden h-full">
                     <div className="aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#1A1A1A] to-[#CC0000] relative">
                       {a.coverImage ? (
-                        <img src={a.coverImage} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <img loading="lazy" decoding="async" src={a.coverImage} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-white/40"><Calendar className="w-12 h-12" /></div>
                       )}
@@ -625,7 +628,7 @@ function Courses({ t, lang, user, setAuthMode }) {
             {filtered.map(c => (
               <Card key={c.id} className="card-hover overflow-hidden border-2 border-transparent hover:border-[#FFCE00]">
                 <div className="h-2 flag-gradient-h" />
-                {c.coverImage && <div className="h-40 overflow-hidden"><img src={c.coverImage} alt={c.title_ar} className="w-full h-full object-cover" /></div>}
+                {c.coverImage && <div className="h-40 overflow-hidden"><img loading="lazy" decoding="async" src={c.coverImage} alt={c.title_ar} className="w-full h-full object-cover" /></div>}
                 <CardHeader>
                   <div className="flex items-start justify-between gap-3 mb-1"><Badge className="bg-[#1A1A1A] text-white hover:bg-[#1A1A1A] text-base px-3 py-1 font-black">{c.level}</Badge><Badge variant="outline" className="border-[#CC0000] text-[#CC0000] font-bold">${c.price_usd}</Badge></div>
                   <CardTitle className="text-lg">{lang === 'ar' ? c.title_ar : c.title_de}</CardTitle>
@@ -877,7 +880,7 @@ function About({ t, lang }) {
               <Card key={m.id} className="card-hover overflow-hidden group">
                 <div className="aspect-square w-full overflow-hidden bg-gradient-to-br from-neutral-100 to-neutral-200 relative">
                   {m.photo ? (
-                    <img src={m.photo} alt={m.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img loading="lazy" decoding="async" src={m.photo} alt={m.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1A1A1A] via-[#CC0000] to-[#FFCE00] text-white font-black text-6xl">{m.name?.charAt(0)}</div>
                   )}
@@ -911,7 +914,7 @@ function About({ t, lang }) {
                 <Card className="card-hover h-full overflow-hidden">
                   <CardContent className="p-5 flex flex-col items-center justify-center gap-3 h-full min-h-[140px]">
                     {a.logo ? (
-                      <div className="h-16 w-full flex items-center justify-center"><img src={a.logo} alt={a.name} className="max-h-16 max-w-full object-contain" /></div>
+                      <div className="h-16 w-full flex items-center justify-center"><img loading="lazy" decoding="async" src={a.logo} alt={a.name} className="max-h-16 max-w-full object-contain" /></div>
                     ) : (
                       <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-[#CC0000]/10 to-[#FFCE00]/20 flex items-center justify-center"><Award className="w-8 h-8 text-[#CC0000]" /></div>
                     )}
@@ -988,7 +991,7 @@ function Dashboard({ t, lang, user, setAuthMode }) {
           <CardContent className="p-7 flex items-center gap-5 flex-wrap">
             <div className="relative group">
               {data.user.photo?.url ? (
-                <img src={data.user.photo.url} alt={user.name} className="w-20 h-20 rounded-full object-cover border-4 border-[#FFCE00]" />
+                <img loading="lazy" decoding="async" src={data.user.photo.url} alt={user.name} className="w-20 h-20 rounded-full object-cover border-4 border-[#FFCE00]" />
               ) : (
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#1A1A1A] via-[#CC0000] to-[#FFCE00] flex items-center justify-center text-white text-3xl font-black shadow-xl">{user.name?.charAt(0)?.toUpperCase()}</div>
               )}
@@ -1777,7 +1780,7 @@ function CrudFormDialog({ title, fields, item, onClose, onSaved, endpoint, image
               <Label className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" />صورة الغلاف</Label>
               {form.coverImage ? (
                 <div className="relative rounded-2xl overflow-hidden mt-1 border-2 border-neutral-200">
-                  <img src={form.coverImage} alt="cover" className="w-full h-40 object-cover" />
+                  <img loading="lazy" decoding="async" src={form.coverImage} alt="cover" className="w-full h-40 object-cover" />
                   <button type="button" onClick={removeCover} className="absolute top-2 end-2 bg-red-600 text-white p-1.5 rounded-lg shadow-lg"><Trash2 className="w-4 h-4" /></button>
                 </div>
               ) : (
@@ -1935,7 +1938,7 @@ function TeacherStudents({ courseId, courseLevel }) {
         <Card key={s.id} className="card-hover cursor-pointer" onClick={() => setProfile(s)}>
           <CardContent className="p-5">
             <div className="flex items-center gap-3 mb-3">
-              {s.photo?.url ? <img src={s.photo.url} alt={s.name} className="w-14 h-14 rounded-full object-cover border-2 border-[#FFCE00]" /> : <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#1A1A1A] via-[#CC0000] to-[#FFCE00] flex items-center justify-center text-white text-xl font-black shrink-0">{s.name?.charAt(0)?.toUpperCase()}</div>}
+              {s.photo?.url ? <img loading="lazy" decoding="async" src={s.photo.url} alt={s.name} className="w-14 h-14 rounded-full object-cover border-2 border-[#FFCE00]" /> : <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#1A1A1A] via-[#CC0000] to-[#FFCE00] flex items-center justify-center text-white text-xl font-black shrink-0">{s.name?.charAt(0)?.toUpperCase()}</div>}
               <div className="flex-1 min-w-0"><div className="font-bold truncate">{s.name}</div><div className="text-xs text-neutral-500 truncate">{s.email}</div></div>
             </div>
             <div className="space-y-1 text-xs text-neutral-600">
@@ -2143,7 +2146,7 @@ function TeacherMaterials({ courseId }) {
         const ti = fileTypeIcon(m.format)
         const isImage = m.resource_type === 'image'
         return (<Card key={m.id} className="card-hover overflow-hidden">
-          {isImage && m.url ? <img src={m.url} alt={m.title} className="w-full h-32 object-cover" /> : (<div className="w-full h-32 bg-gradient-to-br from-neutral-100 to-neutral-200 flex items-center justify-center text-5xl">{ti.icon}</div>)}
+          {isImage && m.url ? <img loading="lazy" decoding="async" src={m.url} alt={m.title} className="w-full h-32 object-cover" /> : (<div className="w-full h-32 bg-gradient-to-br from-neutral-100 to-neutral-200 flex items-center justify-center text-5xl">{ti.icon}</div>)}
           <CardContent className="p-3">
             <div className="font-bold text-sm truncate mb-1">{m.title}</div>
             <div className="text-xs text-neutral-500 mb-2">{ti.label} · {fmtSize(m.bytes)}</div>
@@ -2310,7 +2313,7 @@ function ProfilePhotoUploader({ user, onUploaded, onRemove }) {
 
 
 function PageHero({ img, title, sub }) {
-  return (<div className="relative h-48 md:h-64 rounded-3xl overflow-hidden mb-10"><img src={img} alt="" className="absolute inset-0 w-full h-full object-cover" /><div className="absolute inset-0 hero-overlay" /><div className="absolute top-0 right-0 left-0 h-1.5 flag-gradient-h" /><div className="absolute inset-0 flex flex-col justify-center px-8 text-white"><h1 className="text-3xl md:text-5xl font-black mb-2 tracking-tight">{title}</h1><p className="text-white/85 max-w-2xl">{sub}</p></div></div>)
+  return (<div className="relative h-48 md:h-64 rounded-3xl overflow-hidden mb-10"><img loading="lazy" decoding="async" src={img} alt="" className="absolute inset-0 w-full h-full object-cover" /><div className="absolute inset-0 hero-overlay" /><div className="absolute top-0 right-0 left-0 h-1.5 flag-gradient-h" /><div className="absolute inset-0 flex flex-col justify-center px-8 text-white"><h1 className="text-3xl md:text-5xl font-black mb-2 tracking-tight">{title}</h1><p className="text-white/85 max-w-2xl">{sub}</p></div></div>)
 }
 function Row({ icon: Icon, label, val }) { return <div className="flex items-start gap-2 text-neutral-700"><Icon className="w-4 h-4 text-[#CC0000] mt-0.5 shrink-0" /><span className="text-xs text-neutral-500 me-1.5 font-semibold">{label}:</span><span className="font-medium flex-1">{val}</span></div> }
 function Loading({ t }) { return <div className="py-20 text-center text-neutral-500">{t.common.loading}</div> }

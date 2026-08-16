@@ -1,4 +1,4 @@
-const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://dasdeutschehaus.com'
+const SITE_URL = (process.env.NEXT_PUBLIC_BASE_URL || 'https://www.das-deutsche-haus.com').replace(/\/+$/, '')
 
 export default function robots() {
   return {
