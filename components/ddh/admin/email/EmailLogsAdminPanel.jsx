@@ -13,11 +13,9 @@ import { ErrorBoundary } from '@/components/ddh/ErrorBoundary'
 
 const TYPE_LABELS = {
   admin_course_registration: { ar: 'إشعار أدمن - تسجيل كورس', emoji: '🎓' },
-  admin_telc_booking: { ar: 'إشعار أدمن - حجز telc', emoji: '🏆' },
   admin_vocational_application: { ar: 'إشعار أدمن - Ausbildung', emoji: '💼' },
   admin_travel_consultation: { ar: 'إشعار أدمن - استشارة', emoji: '✈️' },
   confirm_course_registration: { ar: 'تأكيد طالب - كورس', emoji: '✅' },
-  confirm_telc_booking: { ar: 'تأكيد طالب - telc', emoji: '✅' },
   confirm_vocational_application: { ar: 'تأكيد طالب - Ausbildung', emoji: '✅' },
   confirm_travel_consultation: { ar: 'تأكيد طالب - استشارة', emoji: '✅' },
   user_welcome: { ar: 'ترحيب طالب جديد', emoji: '🎉' },

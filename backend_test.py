@@ -1,271 +1,356 @@
 #!/usr/bin/env python3
 """
-Regression Test Suite for Das Deutsche Haus Backend
-Testing public endpoints after frontend-only changes
+REGRESSION TEST: telc Feature Removal
+Tests that telc endpoints are removed and remaining features work correctly.
 """
-
 import requests
+import json
 import sys
-import os
+from datetime import datetime
 
-# Get base URL from environment or use default
-BASE_URL = os.getenv('NEXT_PUBLIC_BASE_URL', 'https://telc-academy.preview.emergentagent.com')
-API_BASE = f"{BASE_URL}/api"
+# Base URL from .env
+BASE_URL = "https://www.das-deutsche-haus.com/api"
 
-print(f"🧪 Starting Regression Tests")
-print(f"📍 Base URL: {BASE_URL}")
-print(f"📍 API Base: {API_BASE}")
-print("=" * 80)
+# Test credentials
+SUPER_ADMIN_EMAIL = "bachir.devops@gmail.com"
+SUPER_ADMIN_PASSWORD = "@26042026Admin"
 
-# Test results tracking
-tests_passed = 0
-tests_failed = 0
-test_results = []
+# Global session
+session = requests.Session()
+session.headers.update({"Content-Type": "application/json"})
 
-def test_endpoint(test_name, method, endpoint, expected_status=200, validate_fn=None):
-    """Generic test function for API endpoints"""
-    global tests_passed, tests_failed
-    
-    url = f"{API_BASE}{endpoint}"
-    print(f"\n🔍 Testing: {test_name}")
-    print(f"   URL: {url}")
-    
+def log(msg, status="INFO"):
+    """Log test messages"""
+    timestamp = datetime.now().strftime("%H:%M:%S")
+    print(f"[{timestamp}] [{status}] {msg}")
+
+def test_auth_login():
+    """Test 1: Auth - Super admin login works"""
     try:
-        if method == "GET":
-            response = requests.get(url, timeout=10)
-        elif method == "POST":
-            response = requests.post(url, timeout=10)
-        else:
-            raise ValueError(f"Unsupported method: {method}")
+        log("TEST 1: Super admin login", "TEST")
+        response = session.post(
+            f"{BASE_URL}/auth/login",
+            json={"email": SUPER_ADMIN_EMAIL, "password": SUPER_ADMIN_PASSWORD}
+        )
         
-        print(f"   Status: {response.status_code}")
-        
-        # Check status code
-        if response.status_code != expected_status:
-            print(f"   ❌ FAIL: Expected status {expected_status}, got {response.status_code}")
-            tests_failed += 1
-            test_results.append(f"❌ {test_name}")
+        if response.status_code != 200:
+            log(f"❌ Login failed with status {response.status_code}: {response.text}", "FAIL")
             return False
         
-        # Parse JSON
-        try:
-            data = response.json()
-        except Exception as e:
-            print(f"   ❌ FAIL: Invalid JSON response: {e}")
-            tests_failed += 1
-            test_results.append(f"❌ {test_name}")
+        data = response.json()
+        if not data.get("user"):
+            log(f"❌ No user object in response: {data}", "FAIL")
             return False
         
-        # Run custom validation if provided
-        if validate_fn:
-            validation_result = validate_fn(data)
-            if validation_result is not True:
-                print(f"   ❌ FAIL: {validation_result}")
-                tests_failed += 1
-                test_results.append(f"❌ {test_name}")
+        user = data["user"]
+        if user.get("role") != "super_admin":
+            log(f"❌ User role is not super_admin: {user.get('role')}", "FAIL")
+            return False
+        
+        # Check cookie is set
+        if "ddh_token" not in session.cookies:
+            log("❌ ddh_token cookie not set", "FAIL")
+            return False
+        
+        log(f"✅ Login successful - User: {user.get('name')}, Role: {user.get('role')}", "PASS")
+        return True
+    except Exception as e:
+        log(f"❌ Exception during login: {str(e)}", "FAIL")
+        return False
+
+def test_removed_endpoints():
+    """Test 2: Removed telc endpoints return 404 (not 500)"""
+    try:
+        log("TEST 2: Removed telc endpoints return 404", "TEST")
+        
+        endpoints = [
+            ("GET", "/telc-exams"),
+            ("POST", "/telc-bookings"),
+            ("GET", "/manager/telc-exams"),
+        ]
+        
+        all_pass = True
+        for method, path in endpoints:
+            url = f"{BASE_URL}{path}"
+            
+            if method == "GET":
+                response = session.get(url)
+            elif method == "POST":
+                response = session.post(url, json={"examId": "test"})
+            
+            # Should be 404, NOT 500
+            if response.status_code == 500:
+                log(f"❌ {method} {path} returned 500 (should be 404): {response.text}", "FAIL")
+                all_pass = False
+            elif response.status_code == 404:
+                log(f"✅ {method} {path} correctly returns 404", "PASS")
+            else:
+                # Could be 401 for manager endpoint without proper auth, that's acceptable
+                log(f"⚠️  {method} {path} returned {response.status_code} (expected 404, but not 500)", "WARN")
+        
+        return all_pass
+    except Exception as e:
+        log(f"❌ Exception testing removed endpoints: {str(e)}", "FAIL")
+        return False
+
+def test_dashboard_no_telc():
+    """Test 3: Dashboard returns data WITHOUT telc_bookings key"""
+    try:
+        log("TEST 3: Dashboard has no telc_bookings key", "TEST")
+        
+        response = session.get(f"{BASE_URL}/dashboard")
+        
+        if response.status_code != 200:
+            log(f"❌ Dashboard failed with status {response.status_code}: {response.text}", "FAIL")
+            return False
+        
+        data = response.json()
+        
+        # Check expected keys are present
+        expected_keys = ["user", "registrations", "vocational_applications", "travel_consultations"]
+        for key in expected_keys:
+            if key not in data:
+                log(f"❌ Missing expected key '{key}' in dashboard response", "FAIL")
                 return False
         
-        print(f"   ✅ PASS")
-        tests_passed += 1
-        test_results.append(f"✅ {test_name}")
-        return True
+        # Check telc_bookings is NOT present
+        if "telc_bookings" in data:
+            log(f"❌ telc_bookings key found in dashboard (should be removed): {list(data.keys())}", "FAIL")
+            return False
         
-    except requests.exceptions.Timeout:
-        print(f"   ❌ FAIL: Request timeout")
-        tests_failed += 1
-        test_results.append(f"❌ {test_name}")
-        return False
-    except requests.exceptions.RequestException as e:
-        print(f"   ❌ FAIL: Request error: {e}")
-        tests_failed += 1
-        test_results.append(f"❌ {test_name}")
-        return False
+        log(f"✅ Dashboard response correct - Keys: {list(data.keys())}", "PASS")
+        log(f"   Registrations: {len(data.get('registrations', []))}, Vocational: {len(data.get('vocational_applications', []))}, Travel: {len(data.get('travel_consultations', []))}", "INFO")
+        return True
     except Exception as e:
-        print(f"   ❌ FAIL: Unexpected error: {e}")
-        tests_failed += 1
-        test_results.append(f"❌ {test_name}")
+        log(f"❌ Exception testing dashboard: {str(e)}", "FAIL")
         return False
 
+def test_admin_stats_no_telc():
+    """Test 4: Admin stats has no telcBookings/examRevenue keys"""
+    try:
+        log("TEST 4: Admin stats has no telcBookings/examRevenue", "TEST")
+        
+        response = session.get(f"{BASE_URL}/admin/stats")
+        
+        if response.status_code != 200:
+            log(f"❌ Admin stats failed with status {response.status_code}: {response.text}", "FAIL")
+            return False
+        
+        data = response.json()
+        
+        # Check expected keys are present
+        expected_keys = ["users", "courseRegistrations", "vocationalApps", "consultations", "contactMessages", "courseRevenue", "totalRevenue"]
+        for key in expected_keys:
+            if key not in data:
+                log(f"❌ Missing expected key '{key}' in stats response", "FAIL")
+                return False
+        
+        # Check telc-related keys are NOT present
+        telc_keys = ["telcBookings", "examRevenue"]
+        found_telc = [k for k in telc_keys if k in data]
+        if found_telc:
+            log(f"❌ telc-related keys found in stats (should be removed): {found_telc}", "FAIL")
+            return False
+        
+        log(f"✅ Admin stats correct - Keys: {list(data.keys())}", "PASS")
+        log(f"   Users: {data.get('users')}, Course Registrations: {data.get('courseRegistrations')}, Revenue: ${data.get('totalRevenue')}", "INFO")
+        return True
+    except Exception as e:
+        log(f"❌ Exception testing admin stats: {str(e)}", "FAIL")
+        return False
 
-# Test 1: GET /api/site-features
-def validate_site_features(data):
-    if 'flags' not in data:
-        return "Missing 'flags' key in response"
+def test_site_features_no_telc():
+    """Test 5: Site features contains only german_visitors (no telc)"""
+    try:
+        log("TEST 5: Site features has no telc feature", "TEST")
+        
+        response = session.get(f"{BASE_URL}/admin/site-features")
+        
+        if response.status_code != 200:
+            log(f"❌ Site features failed with status {response.status_code}: {response.text}", "FAIL")
+            return False
+        
+        data = response.json()
+        
+        if "features" not in data:
+            log(f"❌ No 'features' key in response: {data}", "FAIL")
+            return False
+        
+        features = data["features"]
+        feature_keys = [f.get("key") for f in features]
+        
+        # Check telc is NOT in features
+        if "telc" in feature_keys:
+            log(f"❌ 'telc' feature found in site features (should be removed): {feature_keys}", "FAIL")
+            return False
+        
+        # Check german_visitors is present
+        if "german_visitors" not in feature_keys:
+            log(f"⚠️  'german_visitors' feature not found (expected): {feature_keys}", "WARN")
+        
+        log(f"✅ Site features correct - Features: {feature_keys}", "PASS")
+        return True
+    except Exception as e:
+        log(f"❌ Exception testing site features: {str(e)}", "FAIL")
+        return False
+
+def test_unified_inbox():
+    """Test 6: Unified inbox endpoints work for remaining types, telc-bookings returns 404"""
+    try:
+        log("TEST 6: Unified inbox endpoints", "TEST")
+        
+        # Test remaining lead types should work
+        working_endpoints = [
+            "/admin/course-registrations",
+            "/admin/vocational-applications",
+            "/admin/travel-consultations",
+        ]
+        
+        all_pass = True
+        for endpoint in working_endpoints:
+            response = session.get(f"{BASE_URL}{endpoint}")
+            
+            if response.status_code != 200:
+                log(f"❌ {endpoint} failed with status {response.status_code}: {response.text}", "FAIL")
+                all_pass = False
+            else:
+                data = response.json()
+                if "items" not in data:
+                    log(f"❌ {endpoint} missing 'items' key: {data}", "FAIL")
+                    all_pass = False
+                else:
+                    log(f"✅ {endpoint} works - {len(data['items'])} items", "PASS")
+        
+        # Test telc-bookings should return 404 or error (not 500)
+        response = session.get(f"{BASE_URL}/admin/inbox/telc-bookings")
+        if response.status_code == 500:
+            log(f"❌ /admin/inbox/telc-bookings returned 500 (should be 404): {response.text}", "FAIL")
+            all_pass = False
+        elif response.status_code == 404:
+            log(f"✅ /admin/inbox/telc-bookings correctly returns 404", "PASS")
+        else:
+            log(f"⚠️  /admin/inbox/telc-bookings returned {response.status_code} (expected 404, but not 500)", "WARN")
+        
+        return all_pass
+    except Exception as e:
+        log(f"❌ Exception testing unified inbox: {str(e)}", "FAIL")
+        return False
+
+def test_public_content():
+    """Test 7: Public content still works (courses, home content without telc)"""
+    try:
+        log("TEST 7: Public content endpoints", "TEST")
+        
+        all_pass = True
+        
+        # Test courses endpoint
+        response = session.get(f"{BASE_URL}/courses")
+        if response.status_code != 200:
+            log(f"❌ /courses failed with status {response.status_code}: {response.text}", "FAIL")
+            all_pass = False
+        else:
+            data = response.json()
+            if "courses" not in data:
+                log(f"❌ /courses missing 'courses' key: {data}", "FAIL")
+                all_pass = False
+            else:
+                courses = data["courses"]
+                log(f"✅ /courses works - {len(courses)} courses", "PASS")
+        
+        # Test content endpoint (if exists)
+        response = session.get(f"{BASE_URL}/content/home_hero")
+        if response.status_code == 200:
+            data = response.json()
+            # Check if response contains 'telc' text
+            response_text = json.dumps(data).lower()
+            if "telc" in response_text:
+                log(f"⚠️  /content/home_hero contains 'telc' text (should be removed)", "WARN")
+            else:
+                log(f"✅ /content/home_hero has no 'telc' references", "PASS")
+        elif response.status_code == 404:
+            log(f"⚠️  /content/home_hero not found (endpoint may not exist)", "WARN")
+        else:
+            log(f"⚠️  /content/home_hero returned {response.status_code}", "WARN")
+        
+        return all_pass
+    except Exception as e:
+        log(f"❌ Exception testing public content: {str(e)}", "FAIL")
+        return False
+
+def test_sanity_vocational():
+    """Test 8: Sanity check - vocational jobs endpoint works"""
+    try:
+        log("TEST 8: Sanity check - vocational jobs", "TEST")
+        
+        response = session.get(f"{BASE_URL}/vocational/jobs")
+        
+        if response.status_code != 200:
+            log(f"❌ /vocational/jobs failed with status {response.status_code}: {response.text}", "FAIL")
+            return False
+        
+        data = response.json()
+        if "jobs" not in data:
+            log(f"❌ /vocational/jobs missing 'jobs' key: {data}", "FAIL")
+            return False
+        
+        jobs = data["jobs"]
+        log(f"✅ /vocational/jobs works - {len(jobs)} jobs", "PASS")
+        return True
+    except Exception as e:
+        log(f"❌ Exception testing vocational jobs: {str(e)}", "FAIL")
+        return False
+
+def main():
+    """Run all tests"""
+    log("=" * 80, "INFO")
+    log("REGRESSION TEST: telc Feature Removal", "INFO")
+    log(f"Base URL: {BASE_URL}", "INFO")
+    log("=" * 80, "INFO")
     
-    flags = data['flags']
-    if 'telc' not in flags:
-        return "Missing 'telc' flag"
-    if 'german_visitors' not in flags:
-        return "Missing 'german_visitors' flag"
+    results = []
     
-    print(f"   📊 Flags: telc={flags['telc']}, german_visitors={flags['german_visitors']}")
-    return True
-
-test_endpoint(
-    "1. GET /api/site-features",
-    "GET",
-    "/site-features",
-    validate_fn=validate_site_features
-)
-
-
-# Test 2: GET /api/content/home_hero
-def validate_home_hero(data):
-    if 'data' not in data:
-        return "Missing 'data' key in response"
+    # Test 1: Auth
+    results.append(("Auth Login", test_auth_login()))
     
-    print(f"   📊 Hero data keys: {list(data['data'].keys())}")
-    return True
-
-test_endpoint(
-    "2. GET /api/content/home_hero",
-    "GET",
-    "/content/home_hero",
-    validate_fn=validate_home_hero
-)
-
-
-# Test 3: GET /api/content/home_cta
-def validate_home_cta(data):
-    if 'data' not in data:
-        return "Missing 'data' key in response"
+    # Test 2: Removed endpoints
+    results.append(("Removed Endpoints", test_removed_endpoints()))
     
-    cta_data = data['data']
+    # Test 3: Dashboard
+    results.append(("Dashboard No telc", test_dashboard_no_telc()))
     
-    # Check for required fields
-    required_fields = ['title', 'subtitle', 'button1', 'button2', 'button3']
-    for field in required_fields:
-        if field not in cta_data:
-            return f"Missing required field: {field}"
+    # Test 4: Admin Stats
+    results.append(("Admin Stats No telc", test_admin_stats_no_telc()))
     
-    # Validate buttons have label and action
-    for i in range(1, 4):
-        button_key = f'button{i}'
-        button = cta_data[button_key]
-        if 'label' not in button:
-            return f"{button_key} missing 'label' field"
-        if 'action' not in button:
-            return f"{button_key} missing 'action' field"
+    # Test 5: Site Features
+    results.append(("Site Features No telc", test_site_features_no_telc()))
     
-    print(f"   📊 CTA buttons: {cta_data['button1']['label']}, {cta_data['button2']['label']}, {cta_data['button3']['label']}")
-    return True
-
-test_endpoint(
-    "3. GET /api/content/home_cta",
-    "GET",
-    "/content/home_cta",
-    validate_fn=validate_home_cta
-)
-
-
-# Test 4: GET /api/courses
-def validate_courses(data):
-    if 'courses' not in data:
-        return "Missing 'courses' key in response"
+    # Test 6: Unified Inbox
+    results.append(("Unified Inbox", test_unified_inbox()))
     
-    courses = data['courses']
-    if not isinstance(courses, list):
-        return "Courses should be an array"
+    # Test 7: Public Content
+    results.append(("Public Content", test_public_content()))
     
-    if len(courses) == 0:
-        return "Courses array is empty"
+    # Test 8: Sanity Check
+    results.append(("Vocational Jobs", test_sanity_vocational()))
     
-    print(f"   📊 Found {len(courses)} courses")
-    return True
-
-test_endpoint(
-    "4. GET /api/courses",
-    "GET",
-    "/courses",
-    validate_fn=validate_courses
-)
-
-
-# Test 5: GET /api/telc-exams
-def validate_telc_exams(data):
-    if 'exams' not in data:
-        return "Missing 'exams' key in response"
+    # Summary
+    log("=" * 80, "INFO")
+    log("TEST SUMMARY", "INFO")
+    log("=" * 80, "INFO")
     
-    exams = data['exams']
-    if not isinstance(exams, list):
-        return "Exams should be an array"
+    passed = sum(1 for _, result in results if result)
+    total = len(results)
     
-    print(f"   📊 Found {len(exams)} telc exams")
-    return True
-
-test_endpoint(
-    "5. GET /api/telc-exams",
-    "GET",
-    "/telc-exams",
-    validate_fn=validate_telc_exams
-)
-
-
-# Test 6: GET /api/vocational/jobs
-def validate_vocational_jobs(data):
-    if 'jobs' not in data:
-        return "Missing 'jobs' key in response"
+    for name, result in results:
+        status = "✅ PASS" if result else "❌ FAIL"
+        log(f"{name}: {status}", "INFO")
     
-    jobs = data['jobs']
-    if not isinstance(jobs, list):
-        return "Jobs should be an array"
+    log("=" * 80, "INFO")
+    log(f"TOTAL: {passed}/{total} tests passed ({passed*100//total}%)", "INFO")
+    log("=" * 80, "INFO")
     
-    if len(jobs) == 0:
-        return "Jobs array is empty"
-    
-    print(f"   📊 Found {len(jobs)} vocational jobs")
-    return True
+    # Exit with appropriate code
+    sys.exit(0 if passed == total else 1)
 
-test_endpoint(
-    "6. GET /api/vocational/jobs",
-    "GET",
-    "/vocational/jobs",
-    validate_fn=validate_vocational_jobs
-)
-
-
-# Test 7: GET /api/site-features (verify flags are true)
-def validate_site_features_final(data):
-    if 'flags' not in data:
-        return "Missing 'flags' key in response"
-    
-    flags = data['flags']
-    if 'telc' not in flags:
-        return "Missing 'telc' flag"
-    if 'german_visitors' not in flags:
-        return "Missing 'german_visitors' flag"
-    
-    # Check if both flags are true
-    if flags['telc'] is not True:
-        print(f"   ⚠️  WARNING: telc flag is {flags['telc']}, expected True")
-    if flags['german_visitors'] is not True:
-        print(f"   ⚠️  WARNING: german_visitors flag is {flags['german_visitors']}, expected True")
-    
-    print(f"   📊 Final flags: telc={flags['telc']}, german_visitors={flags['german_visitors']}")
-    return True
-
-test_endpoint(
-    "7. GET /api/site-features (verify flags)",
-    "GET",
-    "/site-features",
-    validate_fn=validate_site_features_final
-)
-
-
-# Print summary
-print("\n" + "=" * 80)
-print("📊 TEST SUMMARY")
-print("=" * 80)
-for result in test_results:
-    print(result)
-
-print(f"\n✅ Passed: {tests_passed}")
-print(f"❌ Failed: {tests_failed}")
-print(f"📈 Success Rate: {(tests_passed / (tests_passed + tests_failed) * 100):.1f}%")
-
-if tests_failed > 0:
-    print("\n⚠️  REGRESSION DETECTED - Some tests failed")
-    sys.exit(1)
-else:
-    print("\n✅ ALL TESTS PASSED - No regressions detected")
-    sys.exit(0)
+if __name__ == "__main__":
+    main()

@@ -35,7 +35,6 @@ import { EmailLogsAdminPanel } from '@/components/ddh/admin/email/EmailLogsAdmin
 import CoursesAdminPanel from '@/components/ddh/admin/courses/CoursesAdminPanel'
 import JobsAdminPanel from '@/components/ddh/admin/jobs/JobsAdminPanel'
 import FeatureFlagsAdminPanel from '@/components/ddh/admin/features/FeatureFlagsAdminPanel'
-import ComingSoonPage from '@/components/ddh/ComingSoonPage'
 import { useFeatureFlags } from '@/lib/useFeatureFlags'
 import { getIcon, fetchContent, fetchList } from '@/lib/content'
 
@@ -48,7 +47,7 @@ function App() {
   const [authMode, setAuthMode] = useState(null)
   const [resetToken, setResetToken] = useState(null)
   const t = T[lang]
-  const { flags, isEnabled } = useFeatureFlags()
+  const { flags } = useFeatureFlags()
 
   useEffect(() => {
     const saved = (typeof window !== 'undefined' && localStorage.getItem('ddh_lang')) || 'ar'
@@ -147,9 +146,6 @@ function App() {
         <ErrorBoundary>
           {page === 'home' && <Home t={t} lang={lang} goto={goto} setAuthMode={setAuthMode} user={user} flags={flags} />}
           {page === 'courses' && <Courses t={t} lang={lang} user={user} setAuthMode={setAuthMode} />}
-          {page === 'telc' && (isEnabled('telc')
-            ? <Telc t={t} lang={lang} user={user} setAuthMode={setAuthMode} />
-            : <ComingSoonPage lang={lang} onGoHome={() => goto('home')} />)}
           {page === 'vocational' && <Vocational t={t} lang={lang} user={user} />}
           {page === 'travel' && <Travel t={t} lang={lang} user={user} />}
           {page === 'about' && <About t={t} lang={lang} />}
@@ -170,11 +166,10 @@ function App() {
 
 // ==================== Home (MySchool-inspired redesign) ====================
 function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
-  const telcEnabled = flags.telc !== false
-  // Helper: hide any CTA that navigates to a disabled feature
+  // Helper: hide any CTA that navigates to a removed/disabled feature
   const isActionEnabled = (action) => {
     if (!action || typeof action !== 'string') return true
-    if (!telcEnabled && (action === 'goto:telc' || action.startsWith('goto:telc'))) return false
+    if (action === 'goto:telc' || action.startsWith('goto:telc')) return false // telc page removed
     if (flags.german_visitors === false && action.includes('/german-visitors')) return false
     return true
   }
@@ -246,8 +241,8 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
             <p className="text-lg md:text-xl text-white/90 mb-8 leading-relaxed max-w-2xl">{(lang === 'de' ? hero?.desc_de : hero?.desc_ar) || t.hero.subtitle}</p>
             <div className="flex flex-wrap gap-3">
               <button onClick={() => doAction(hero?.cta1Action || 'goto:courses')} className="btn-primary px-6 py-3.5 rounded-xl font-bold flex items-center gap-2"><GraduationCap className="w-5 h-5" />{hero?.cta1Label || t.hero.cta1}<ArrowRight className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} /></button>
-              {isActionEnabled(hero?.cta2Action || 'goto:telc') && (
-                <button onClick={() => doAction(hero?.cta2Action || 'goto:telc')} className="btn-gold px-6 py-3.5 rounded-xl font-bold flex items-center gap-2"><Award className="w-5 h-5" />{hero?.cta2Label || t.hero.cta2}</button>
+              {isActionEnabled(hero?.cta2Action || 'goto:contact') && (
+                <button onClick={() => doAction(hero?.cta2Action || 'goto:contact')} className="btn-gold px-6 py-3.5 rounded-xl font-bold flex items-center gap-2"><Award className="w-5 h-5" />{hero?.cta2Label || t.hero.cta2}</button>
               )}
               {(hero?.cta3Label !== '' || hero?.cta3Label === undefined) && isActionEnabled(hero?.cta3Action || 'href:/visa-types#booking') && (
                 <button onClick={() => doAction(hero?.cta3Action || 'href:/visa-types#booking')} className="px-6 py-3.5 rounded-xl bg-white/15 backdrop-blur-md border-2 border-white/40 text-white font-bold flex items-center gap-2 hover:bg-white/25 transition"><Plane className="w-5 h-5" />{hero?.cta3Label || 'احجز استشارة'}</button>
@@ -441,7 +436,7 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
             {[
               { name: 'سارة محمد · Sara M.', role: lang === 'ar' ? 'طالبة طب — برلين' : 'Medizinstudentin — Berlin', q_ar: 'بدأت من A1 ووصلت إلى C1 خلال 14 شهراً. الآن أدرس الطب في برلين.', q_de: 'Von A1 zu C1 in 14 Monaten. Jetzt studiere ich in Berlin.' },
               { name: 'أحمد · Ahmad K.', role: lang === 'ar' ? 'متدرب — Siemens' : 'Auszubildender — Siemens', q_ar: 'حصلت على عقد Ausbildung مع Siemens بفضل الإعداد الممتاز في المعهد.', q_de: 'Ich bekam einen Ausbildungsvertrag bei Siemens.' },
-              { name: 'لينا · Lina H.', role: lang === 'ar' ? 'ممرضة — Charité' : 'Krankenpflegerin — Charité', q_ar: 'telc B2 Pflege غيّر حياتي — الآن أعمل في أكبر مستشفى ألماني.', q_de: 'telc B2 Pflege hat mein Leben verändert.' },
+              { name: 'لينا · Lina H.', role: lang === 'ar' ? 'ممرضة — Charité' : 'Krankenpflegerin — Charité', q_ar: 'كورس B2 للتمريض غيّر حياتي — الآن أعمل في أكبر مستشفى ألماني.', q_de: 'Der B2-Pflegekurs hat mein Leben verändert.' },
             ].map((tt, i) => (
               <Card key={i} className="card-hover bg-gradient-to-br from-white to-neutral-50 relative">
                 <CardContent className="p-7">
@@ -561,7 +556,7 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
   )
 }
 
-// ==================== Public pages (Courses, Telc, Vocational, Travel, About, Contact, Dashboard) ====================
+// ==================== Public pages (Courses, Vocational, Travel, About, Contact, Dashboard) ====================
 function Courses({ t, lang, user, setAuthMode }) {
   const [courses, setCourses] = useState([])
   const [filter, setFilter] = useState('all')
@@ -616,54 +611,7 @@ function Courses({ t, lang, user, setAuthMode }) {
   )
 }
 
-function Telc({ t, lang, user, setAuthMode }) {
-  const [exams, setExams] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [bookExam, setBookExam] = useState(null)
-  useEffect(() => { fetch('/api/telc-exams').then(r => r.json()).then(d => { setExams(d.exams || []); setLoading(false) }) }, [])
-  return (
-    <section className="py-12 md:py-16">
-      <div className="container mx-auto px-4">
-        <PageHero img={LEHRER_IMG} title={t.telc.title} sub={t.telc.sub} />
-        <Card className="mb-10 border-2 border-[#FFCE00]/40 bg-gradient-to-br from-yellow-50/50 to-white">
-          <CardContent className="p-6 flex gap-4 items-start"><div className="w-12 h-12 rounded-xl bg-[#FFCE00] flex items-center justify-center shrink-0"><Award className="w-6 h-6 text-[#1A1A1A]" /></div><div><h3 className="font-black text-lg mb-1.5">{t.telc.what}</h3><p className="text-neutral-700 leading-relaxed text-sm">{t.telc.whatDesc}</p></div></CardContent>
-        </Card>
-        <h3 className="text-2xl font-black mb-6 flex items-center gap-2"><Calendar className="w-6 h-6 text-[#CC0000]" />{t.telc.upcoming}</h3>
-        {loading ? <Loading t={t} /> : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {exams.map(e => (
-              <Card key={e.id} className="card-hover overflow-hidden">
-                <div className="h-1.5 flag-gradient-h" />
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-3"><Badge className="bg-[#CC0000] text-white hover:bg-[#CC0000] font-bold">{e.type}</Badge><span className="text-2xl font-black">${e.price_usd}</span></div>
-                  <div className="space-y-2 text-sm text-neutral-700 mb-4">
-                    <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-[#CC0000]" />{e.date} · {e.time}</div>
-                    <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-[#CC0000]" />{lang === 'ar' ? 'دمشق' : 'Damaskus'}</div>
-                    <div className="flex items-center gap-2"><Users className="w-4 h-4 text-[#CC0000]" />{e.seats} {t.courses.seats}</div>
-                  </div>
-                  <button onClick={() => setBookExam(e)} className="w-full btn-primary py-2.5 rounded-xl font-bold flex items-center justify-center gap-2"><CheckCircle2 className="w-4 h-4" />{t.telc.book}</button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-      {bookExam && <PublicLeadDialog
-        kind="telc"
-        item={bookExam}
-        title={lang === 'ar' ? `حجز امتحان ${bookExam.type}` : `Prüfungsanmeldung ${bookExam.type}`}
-        subtitle={`${bookExam.date} · ${bookExam.time}`}
-        endpoint="/api/telc-bookings"
-        payload={{ examId: bookExam.id }}
-        user={user}
-        lang={lang}
-        onClose={() => setBookExam(null)}
-      />}
-    </section>
-  )
-}
-
-// ===== Shared Public Lead Dialog (used by Course/Telc registration when not logged in) =====
+// ===== Shared Public Lead Dialog (used by Course registration when not logged in) =====
 function PublicLeadDialog({ kind, item, title, subtitle, endpoint, payload, user, lang, onClose }) {
   const [form, setForm] = useState({
     name: user?.name || '',
@@ -1004,16 +952,14 @@ function Dashboard({ t, lang, user, setAuthMode }) {
           </CardContent>
         </Card>
         <Tabs defaultValue="courses">
-          <TabsList className="grid grid-cols-2 md:grid-cols-4 mb-6 h-auto">
+          <TabsList className="grid grid-cols-2 md:grid-cols-3 mb-6 h-auto">
             <TabsTrigger value="courses"><BookOpen className="w-4 h-4 me-1.5" />{t.dash.myCourses} ({data.registrations?.length || 0})</TabsTrigger>
-            <TabsTrigger value="exams"><Award className="w-4 h-4 me-1.5" />{t.dash.myExams} ({data.telc_bookings?.length || 0})</TabsTrigger>
             <TabsTrigger value="apps"><Briefcase className="w-4 h-4 me-1.5" />{t.dash.myApps} ({data.vocational_applications?.length || 0})</TabsTrigger>
             <TabsTrigger value="travel"><Plane className="w-4 h-4 me-1.5" />{t.dash.myConsult} ({data.travel_consultations?.length || 0})</TabsTrigger>
           </TabsList>
           <TabsContent value="courses">
             {data.registrations?.length ? <div className="grid md:grid-cols-2 gap-4">{data.registrations.map(r => (<StudentCourseCard key={r.id} reg={r} lang={lang} />))}</div> : <Empty t={t} />}
           </TabsContent>
-          <TabsContent value="exams">{data.telc_bookings?.length ? <div className="grid md:grid-cols-2 gap-4">{data.telc_bookings.map(b => (<Card key={b.id}><CardContent className="p-5"><Badge className="bg-[#CC0000] text-white mb-2">{b.type}</Badge><div className="text-sm"><Calendar className="w-4 h-4 inline me-1" />{b.date}</div><div className="text-sm">${b.price_usd} · {b.status}</div></CardContent></Card>))}</div> : <Empty t={t} />}</TabsContent>
           <TabsContent value="apps">{data.vocational_applications?.length ? <div className="grid md:grid-cols-2 gap-4">{data.vocational_applications.map(a => (<Card key={a.id}><CardContent className="p-5"><h4 className="font-bold mb-1">{a.jobTitle}</h4><div className="text-sm">{a.status} · {new Date(a.createdAt).toLocaleDateString()}</div></CardContent></Card>))}</div> : <Empty t={t} />}</TabsContent>
           <TabsContent value="travel">{data.travel_consultations?.length ? <div className="grid md:grid-cols-2 gap-4">{data.travel_consultations.map(c => (<Card key={c.id}><CardContent className="p-5"><h4 className="font-bold mb-1">{c.visaType}</h4><div className="text-sm">{c.preferredDate || '-'} · {c.status}</div></CardContent></Card>))}</div> : <Empty t={t} />}</TabsContent>
         </Tabs>
@@ -1238,7 +1184,6 @@ function AdminStats() {
   const cards = [
     { l: 'إجمالي المستخدمين', v: s.users, icon: Users, c: '#1A1A1A' },
     { l: 'تسجيلات الكورسات', v: s.courseRegistrations, icon: BookOpen, c: '#CC0000' },
-    { l: 'حجوزات telc', v: s.telcBookings, icon: Award, c: '#FFCE00' },
     { l: 'طلبات Ausbildung', v: s.vocationalApps, icon: Briefcase, c: '#2C5F9E' },
     { l: 'استشارات السفر', v: s.consultations, icon: Plane, c: '#16a34a' },
     { l: 'رسائل التواصل', v: s.contactMessages, icon: Mail, c: '#9333ea' },
@@ -1248,9 +1193,8 @@ function AdminStats() {
       {cards.map((c, i) => (<Card key={i} className="card-hover"><CardContent className="p-5 flex items-center justify-between"><div><div className="text-xs text-neutral-500 font-semibold">{c.l}</div><div className="text-3xl font-black mt-1">{c.v}</div></div><div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `${c.c}15` }}><c.icon className="w-6 h-6" style={{ color: c.c }} /></div></CardContent></Card>))}
     </div>
     <Card className="border-2 border-[#FFCE00]"><div className="h-2 flag-gradient-h" /><CardContent className="p-6"><h3 className="text-xl font-black mb-4 flex items-center gap-2"><DollarSign className="w-5 h-5 text-[#CC0000]" />التقرير المالي</h3>
-      <div className="grid sm:grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-2 gap-4">
         <div className="p-4 bg-neutral-50 rounded-xl"><div className="text-xs font-semibold text-neutral-500">إيرادات الكورسات</div><div className="text-2xl font-black text-[#1A1A1A] mt-1">${s.courseRevenue?.toLocaleString()}</div></div>
-        <div className="p-4 bg-neutral-50 rounded-xl"><div className="text-xs font-semibold text-neutral-500">إيرادات الامتحانات</div><div className="text-2xl font-black text-[#CC0000] mt-1">${s.examRevenue?.toLocaleString()}</div></div>
         <div className="p-4 bg-gradient-to-br from-[#FFCE00] to-amber-300 rounded-xl"><div className="text-xs font-semibold">الإجمالي</div><div className="text-2xl font-black text-[#1A1A1A] mt-1">${s.totalRevenue?.toLocaleString()}</div></div>
       </div>
     </CardContent></Card>
@@ -1709,15 +1653,13 @@ function ManagerPanel({ user }) {
           <Badge className="bg-[#2C5F9E] text-white text-base px-4 py-1.5"><ShieldCheck className="w-4 h-4 me-1.5" />Manager</Badge>
         </div>
         <Tabs defaultValue="courses">
-          <TabsList className="grid grid-cols-5 mb-6 h-auto">
+          <TabsList className="grid grid-cols-4 mb-6 h-auto">
             <TabsTrigger value="courses"><BookOpen className="w-4 h-4 me-1.5" />الكورسات</TabsTrigger>
-            <TabsTrigger value="telc"><Award className="w-4 h-4 me-1.5" />telc</TabsTrigger>
             <TabsTrigger value="jobs"><Briefcase className="w-4 h-4 me-1.5" />المهن</TabsTrigger>
             <TabsTrigger value="messages"><MessageCircle className="w-4 h-4 me-1.5" />الرسائل</TabsTrigger>
             <TabsTrigger value="apps"><FileText className="w-4 h-4 me-1.5" />الطلبات</TabsTrigger>
           </TabsList>
           <TabsContent value="courses"><ManageCourses /></TabsContent>
-          <TabsContent value="telc"><ManageTelc /></TabsContent>
           <TabsContent value="jobs"><ManageJobs /></TabsContent>
           <TabsContent value="messages"><ManageMessages /></TabsContent>
           <TabsContent value="apps"><ManageApps /></TabsContent>
@@ -1740,22 +1682,6 @@ function ManageCourses() {
     <div className="grid md:grid-cols-2 gap-4">{items.map(c => (<Card key={c.id}><CardContent className="p-5"><div className="flex items-start justify-between mb-2"><Badge className="bg-[#1A1A1A] text-white font-black">{c.level}</Badge><div className="flex gap-1"><Button size="sm" variant="outline" onClick={() => setEditing(c)}><Pencil className="w-3.5 h-3.5" /></Button><Button size="sm" variant="outline" className="text-red-600" onClick={() => setConfirm(c)}><Trash2 className="w-3.5 h-3.5" /></Button></div></div><h4 className="font-bold mb-1">{c.title_ar}</h4><div className="text-xs text-neutral-500">{c.duration_ar} · ${c.price_usd} · بدء {c.start_date}</div></CardContent></Card>))}</div>
     {editing && <CrudFormDialog title={editing.id ? 'تعديل كورس' : 'إضافة كورس'} fields={fields} item={editing} onClose={() => setEditing(null)} onSaved={() => { refresh(); setEditing(null) }} endpoint="courses" imageField={{ folder: 'ddh/courses' }} />}
     {confirm && <ConfirmDialog title="حذف الكورس" desc={`حذف ${confirm.title_ar}؟`} onConfirm={() => del(confirm)} onCancel={() => setConfirm(null)} />}
-  </>)
-}
-
-function ManageTelc() {
-  const [items, setItems] = useState([])
-  const [editing, setEditing] = useState(null)
-  const [confirm, setConfirm] = useState(null)
-  const refresh = () => fetch('/api/manager/telc-exams').then(r => r.json()).then(d => setItems(d.items || []))
-  useEffect(() => { refresh() }, [])
-  const fields = [{ k: 'type', l: 'النوع (مثل: telc Deutsch B1)' }, { k: 'date', l: 'التاريخ YYYY-MM-DD' }, { k: 'time', l: 'الوقت' }, { k: 'price_usd', l: 'السعر USD', num: true }, { k: 'seats', l: 'المقاعد', num: true }]
-  const del = async (it) => { await fetch(`/api/manager/telc-exams/${it.id}`, { method: 'DELETE' }); toast.success('تم الحذف'); refresh(); setConfirm(null) }
-  return (<>
-    <div className="flex justify-between mb-4"><h3 className="text-xl font-black">امتحانات telc ({items.length})</h3><Button onClick={() => setEditing({})} className="btn-primary"><Plus className="w-4 h-4 me-1.5" />إضافة امتحان</Button></div>
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">{items.map(e => (<Card key={e.id}><CardContent className="p-4"><div className="flex justify-between mb-2"><Badge className="bg-[#CC0000] text-white">{e.type}</Badge><div className="flex gap-1"><Button size="sm" variant="outline" onClick={() => setEditing(e)}><Pencil className="w-3.5 h-3.5" /></Button><Button size="sm" variant="outline" className="text-red-600" onClick={() => setConfirm(e)}><Trash2 className="w-3.5 h-3.5" /></Button></div></div><div className="text-sm">{e.date} · {e.time}</div><div className="text-xs text-neutral-500">${e.price_usd} · {e.seats} مقاعد</div></CardContent></Card>))}</div>
-    {editing && <CrudFormDialog title={editing.id ? 'تعديل امتحان' : 'إضافة امتحان'} fields={fields} item={editing} onClose={() => setEditing(null)} onSaved={() => { refresh(); setEditing(null) }} endpoint="telc-exams" />}
-    {confirm && <ConfirmDialog title="حذف الامتحان" desc={`حذف ${confirm.type}؟`} onConfirm={() => del(confirm)} onCancel={() => setConfirm(null)} />}
   </>)
 }
 

@@ -11,11 +11,11 @@ export const metadata = {
     template: '%s | Das Deutsche Haus',
   },
   description:
-    'كورسات اللغة الألمانية من A1 إلى C2، امتحانات telc المعتمدة، التدريب المهني (Ausbildung)، واستشارات السفر إلى ألمانيا — بوابتك الرسمية إلى ألمانيا.',
+    'كورسات اللغة الألمانية من A1 إلى C2، التدريب المهني (Ausbildung)، واستشارات السفر إلى ألمانيا — بوابتك الرسمية إلى ألمانيا.',
   keywords: [
-    'Das Deutsche Haus', 'المعهد الألماني', 'كورسات ألمانية', 'telc', 'Ausbildung',
+    'Das Deutsche Haus', 'المعهد الألماني', 'كورسات ألمانية', 'Ausbildung',
     'التدريب المهني في ألمانيا', 'German courses Syria', 'Deutsch lernen', 'Visa Deutschland',
-    'الهجرة إلى ألمانيا', 'شهادة telc', 'A1 A2 B1 B2 C1 C2 Deutsch',
+    'الهجرة إلى ألمانيا', 'A1 A2 B1 B2 C1 C2 Deutsch',
   ],
   authors: [{ name: 'Das Deutsche Haus' }],
   creator: 'Das Deutsche Haus',
@@ -45,13 +45,13 @@ export const metadata = {
     siteName: 'Das Deutsche Haus',
     title: 'Das Deutsche Haus | جسر بين سوريا وألمانيا',
     description:
-      'كورسات اللغة الألمانية، امتحانات telc المعتمدة، التدريب المهني في ألمانيا واستشارات السفر — بوابتك إلى ألمانيا.',
+      'كورسات اللغة الألمانية، التدريب المهني في ألمانيا واستشارات السفر — بوابتك إلى ألمانيا.',
     images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: 'Das Deutsche Haus' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Das Deutsche Haus | جسر بين سوريا وألمانيا',
-    description: 'كورسات اللغة الألمانية، telc، Ausbildung، واستشارات السفر إلى ألمانيا.',
+    description: 'كورسات اللغة الألمانية، Ausbildung، واستشارات السفر إلى ألمانيا.',
     images: [OG_IMAGE],
   },
   robots: {
@@ -84,7 +84,7 @@ const jsonLd = {
   url: SITE_URL,
   logo: OG_IMAGE,
   description:
-    'مؤسسة تعليمية بلغتين تربط سوريا وألمانيا — كورسات لغة، telc، Ausbildung، وسفر.',
+    'مؤسسة تعليمية بلغتين تربط سوريا وألمانيا — كورسات لغة، Ausbildung، وسفر.',
   sameAs: [],
   areaServed: ['SY', 'DE'],
   knowsLanguage: ['ar', 'de'],

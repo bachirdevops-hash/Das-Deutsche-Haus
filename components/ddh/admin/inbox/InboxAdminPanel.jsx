@@ -16,7 +16,6 @@ import { ErrorBoundary } from '@/components/ddh/ErrorBoundary'
 
 const RESOURCES = [
   { key: 'course-registrations', label: 'تسجيلات الكورسات', icon: BookOpen, color: '#CC0000', titleField: (it) => it.courseName || it.level || 'كورس' },
-  { key: 'telc-bookings', label: 'حجوزات telc', icon: Award, color: '#FFCE00', titleField: (it) => `${it.type || ''} · ${it.date || ''}` },
   { key: 'vocational-applications', label: 'طلبات Ausbildung', icon: Briefcase, color: '#2C5F9E', titleField: (it) => it.jobTitle || 'تدريب مهني' },
   { key: 'travel-consultations', label: 'استشارات سفر', icon: Plane, color: '#1A1A1A', titleField: (it) => it.consultationTypeName || it.visaType || 'استشارة' },
 ]
@@ -36,7 +35,7 @@ export function InboxAdminPanel() {
             <Inbox className="w-8 h-8 text-[#CC0000]" />
             <h2 className="text-3xl font-black tracking-tight">صندوق الواردات الموحّد</h2>
           </div>
-          <p className="text-sm text-neutral-600">كل الطلبات الواردة من نماذج الموقع — تسجيلات الكورسات، حجوزات telc، طلبات Ausbildung، استشارات السفر. اعتمد الطلب لإنشاء حساب طالب تلقائياً.</p>
+          <p className="text-sm text-neutral-600">كل الطلبات الواردة من نماذج الموقع — تسجيلات الكورسات، طلبات Ausbildung، استشارات السفر. اعتمد الطلب لإنشاء حساب طالب تلقائياً.</p>
         </div>
 
         <Tabs defaultValue={RESOURCES[0].key}>

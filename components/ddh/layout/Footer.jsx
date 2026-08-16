@@ -3,8 +3,7 @@ import { MapPin, Phone, Mail } from 'lucide-react'
 import { LOGO_URL } from '@/lib/constants'
 
 export function Footer({ t, lang, goto, flags = {} }) {
-  const telcEnabled = flags.telc !== false
-  const quickLinks = ['home', 'courses', ...(telcEnabled ? ['telc'] : []), 'vocational', 'travel']
+  const quickLinks = ['home', 'courses', 'vocational', 'travel']
   return (
     <footer className="bg-[#1A1A1A] text-white mt-20"><div className="h-1 flag-gradient-h" />
       <div className="container mx-auto px-4 py-12 grid md:grid-cols-4 gap-8">

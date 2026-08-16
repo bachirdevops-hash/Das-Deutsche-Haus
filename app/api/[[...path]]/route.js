@@ -151,7 +151,6 @@ async function notifyAdminsOfLead(db, kind, title, message, entityId, leadObj) {
     message,
     entityId: entityId || null,
     link: kind === 'course_registration' ? '/admin#courses'
-        : kind === 'telc_booking' ? '/admin#telc'
         : kind === 'vocational_application' ? '/admin#vocational'
         : kind === 'travel_consultation' ? '/admin#consultations'
         : null,
@@ -191,21 +190,12 @@ async function seedIfEmpty(db) {
   const courses = [
     { id: uuidv4(), level: 'A1', title_ar: 'المستوى A1 — للمبتدئين', title_de: 'Stufe A1 — Anfänger', desc_ar: 'تعلّم أساسيات اللغة الألمانية: الأبجدية، التحيات، التعريف بالنفس، والمحادثات اليومية البسيطة.', desc_de: 'Lerne die Grundlagen der deutschen Sprache.', duration_ar: '8 أسابيع', duration_de: '8 Wochen', hours: 80, price_usd: 180, schedule_ar: 'سبت/ثلاثاء/خميس — 5:00م إلى 7:00م', schedule_de: 'Sa/Di/Do — 17:00 bis 19:00', start_date: '2026-07-15', seats: 18 },
     { id: uuidv4(), level: 'A2', title_ar: 'المستوى A2 — أساسي متقدم', title_de: 'Stufe A2 — Grundstufe', desc_ar: 'توسيع المفردات، الأفعال المنفصلة، الأزمنة الماضية، والتعبير عن الآراء البسيطة.', desc_de: 'Erweiterung des Wortschatzes.', duration_ar: '8 أسابيع', duration_de: '8 Wochen', hours: 80, price_usd: 200, schedule_ar: 'أحد/ثلاثاء/خميس — 7:00م إلى 9:00م', schedule_de: 'So/Di/Do — 19:00 bis 21:00', start_date: '2026-07-22', seats: 16 },
-    { id: uuidv4(), level: 'B1', title_ar: 'المستوى B1 — متوسط', title_de: 'Stufe B1 — Mittelstufe', desc_ar: 'فهم النصوص الطويلة، المحادثات المعقدة، كتابة المقالات القصيرة، والاستعداد لشهادة B1 telc.', desc_de: 'Vorbereitung auf telc B1.', duration_ar: '10 أسابيع', duration_de: '10 Wochen', hours: 100, price_usd: 260, schedule_ar: 'سبت/إثنين/أربعاء — 4:00م إلى 6:00م', schedule_de: 'Sa/Mo/Mi — 16:00 bis 18:00', start_date: '2026-08-01', seats: 14 },
+    { id: uuidv4(), level: 'B1', title_ar: 'المستوى B1 — متوسط', title_de: 'Stufe B1 — Mittelstufe', desc_ar: 'فهم النصوص الطويلة، المحادثات المعقدة، كتابة المقالات القصيرة، والاستعداد الكامل لمستوى B1.', desc_de: 'Umfassende Vorbereitung auf Niveau B1.', duration_ar: '10 أسابيع', duration_de: '10 Wochen', hours: 100, price_usd: 260, schedule_ar: 'سبت/إثنين/أربعاء — 4:00م إلى 6:00م', schedule_de: 'Sa/Mo/Mi — 16:00 bis 18:00', start_date: '2026-08-01', seats: 14 },
     { id: uuidv4(), level: 'B2', title_ar: 'المستوى B2 — متوسط متقدم', title_de: 'Stufe B2 — gehobene Mittelstufe', desc_ar: 'إتقان القواعد المتقدمة، النقاشات الأكاديمية، والاستعداد للعمل والدراسة في ألمانيا.', desc_de: 'Vorbereitung auf Studium und Beruf.', duration_ar: '12 أسبوع', duration_de: '12 Wochen', hours: 120, price_usd: 320, schedule_ar: 'أحد/ثلاثاء/خميس — 5:00م إلى 7:30م', schedule_de: 'So/Di/Do — 17:00 bis 19:30', start_date: '2026-08-10', seats: 12 },
     { id: uuidv4(), level: 'C1', title_ar: 'المستوى C1 — متقدم', title_de: 'Stufe C1 — Fortgeschritten', desc_ar: 'لغة أكاديمية ومهنية عالية، تحضير للدراسة الجامعية في ألمانيا.', desc_de: 'Hohes akademisches Niveau.', duration_ar: '14 أسبوع', duration_de: '14 Wochen', hours: 140, price_usd: 400, schedule_ar: 'سبت/أربعاء — 4:00م إلى 7:00م', schedule_de: 'Sa/Mi — 16:00 bis 19:00', start_date: '2026-08-20', seats: 10 },
     { id: uuidv4(), level: 'C2', title_ar: 'المستوى C2 — إتقان', title_de: 'Stufe C2 — Beherrschung', desc_ar: 'مستوى الناطق الأصلي. لغة ثقافية وأدبية ومهنية على أعلى مستوى.', desc_de: 'Muttersprachliches Niveau.', duration_ar: '16 أسبوع', duration_de: '16 Wochen', hours: 160, price_usd: 480, schedule_ar: 'أحد/ثلاثاء — 6:00م إلى 9:00م', schedule_de: 'So/Di — 18:00 bis 21:00', start_date: '2026-09-01', seats: 8 },
   ]
   await db.collection('courses').insertMany(courses)
-  const telc = [
-    { id: uuidv4(), type: 'telc Deutsch A1', date: '2026-08-05', time: '10:00', price_usd: 90, seats: 20 },
-    { id: uuidv4(), type: 'telc Deutsch A2', date: '2026-08-12', time: '10:00', price_usd: 100, seats: 20 },
-    { id: uuidv4(), type: 'telc Deutsch B1', date: '2026-08-20', time: '09:00', price_usd: 130, seats: 24 },
-    { id: uuidv4(), type: 'telc Deutsch B2', date: '2026-09-03', time: '09:00', price_usd: 160, seats: 18 },
-    { id: uuidv4(), type: 'telc Deutsch C1 Hochschule', date: '2026-09-15', time: '09:00', price_usd: 200, seats: 14 },
-    { id: uuidv4(), type: 'telc Deutsch B1·B2 Pflege', date: '2026-09-22', time: '10:00', price_usd: 170, seats: 16 },
-  ]
-  await db.collection('telc_exams').insertMany(telc)
   const jobs = [
     { id: uuidv4(), title_ar: 'تمريض ورعاية صحية', title_de: 'Pflegefachmann/-frau', partner: 'Charité Berlin', duration_ar: '3 سنوات', duration_de: '3 Jahre', salary: '€1,200 - €1,400', requirements_ar: 'B2 ألماني، شهادة ثانوية، صحة جيدة', requirements_de: 'B2 Deutsch, Abitur' },
     { id: uuidv4(), title_ar: 'كهرباء صناعية', title_de: 'Elektroniker für Betriebstechnik', partner: 'Siemens AG', duration_ar: '3.5 سنة', duration_de: '3.5 Jahre', salary: '€1,000 - €1,250', requirements_ar: 'B1 ألماني، أساسيات رياضيات وفيزياء', requirements_de: 'B1 Deutsch, Mathe-Grundlagen' },
@@ -405,10 +395,6 @@ async function handle(request, { params }) {
       const items = await db.collection('courses').find({}, { projection: { _id: 0 } }).sort({ level: 1 }).limit(100).toArray()
       return ok({ courses: items })
     }
-    if (path === 'telc-exams' && method === 'GET') {
-      const items = await db.collection('telc_exams').find({}, { projection: { _id: 0 } }).sort({ date: 1 }).limit(100).toArray()
-      return ok({ exams: items })
-    }
     if (path === 'vocational/jobs' && method === 'GET') {
       const items = await db.collection('vocational_jobs').find({}, { projection: { _id: 0 } }).limit(100).toArray()
       return ok({ jobs: items })
@@ -452,40 +438,6 @@ async function handle(request, { params }) {
       await logActivity(db, me, 'register_course', 'course', courseId, { level: course.level, public: !me }, ip)
       await notifyAdminsOfLead(db, 'course_registration', `تسجيل جديد في كورس ${course.level}`, `${reg.name} (${reg.email}) سجل في كورس ${course.title_ar}`, reg.id, reg)
       return ok({ registration: { ...reg, _id: undefined } })
-    }
-    if (path === 'telc-bookings' && method === 'POST') {
-      // 🌐 PUBLIC endpoint — anyone can submit a telc booking request.
-      const me = await getCurrentUser(db, request)
-      const body = await request.json()
-      const { examId, name, email, phone, notes } = body
-      const exam = await db.collection('telc_exams').findOne({ id: examId })
-      if (!exam) return ok({ error: 'الامتحان غير موجود' }, { status: 404 })
-      if (!me && (!name || !email || !phone)) {
-        return ok({ error: 'الاسم والبريد ورقم الهاتف مطلوبة' }, { status: 400 })
-      }
-      if (me) {
-        const dup = await db.collection('telc_bookings').findOne({ userId: me.id, examId })
-        if (dup) return ok({ error: 'أنت محجوز مسبقاً' }, { status: 400 })
-      }
-      const bk = {
-        id: uuidv4(),
-        userId: me?.id || null,
-        examId,
-        type: exam.type,
-        date: exam.date,
-        name: name || me?.name || '',
-        email: (email || me?.email || '').toLowerCase(),
-        phone: phone || me?.phone || '',
-        notes: notes || '',
-        source: me ? 'authenticated' : 'public_form',
-        status: me ? 'reserved' : 'new',
-        createdAt: new Date().toISOString(),
-        price_usd: exam.price_usd,
-      }
-      await db.collection('telc_bookings').insertOne(bk)
-      await logActivity(db, me, 'book_exam', 'telc_exam', examId, { type: exam.type, public: !me }, ip)
-      await notifyAdminsOfLead(db, 'telc_booking', `حجز جديد لامتحان ${exam.type}`, `${bk.name} (${bk.email}) حجز ${exam.type}`, bk.id, bk)
-      return ok({ booking: { ...bk, _id: undefined } })
     }
     if (path === 'vocational/applications' && method === 'POST') {
       const me = await getCurrentUser(db, request)
@@ -536,16 +488,15 @@ async function handle(request, { params }) {
     if (path === 'dashboard' && method === 'GET') {
       const me = await getCurrentUser(db, request)
       if (!me) return unauth()
-      const [regs, books, apps, cons, courses] = await Promise.all([
+      const [regs, apps, cons, courses] = await Promise.all([
         db.collection('course_registrations').find({ userId: me.id }, { projection: { _id: 0 } }).toArray(),
-        db.collection('telc_bookings').find({ userId: me.id }, { projection: { _id: 0 } }).toArray(),
         db.collection('vocational_applications').find({ userId: me.id }, { projection: { _id: 0 } }).toArray(),
         db.collection('travel_consultations').find({ userId: me.id }, { projection: { _id: 0 } }).toArray(),
         db.collection('courses').find({}, { projection: { _id: 0 } }).toArray(),
       ])
       const cmap = Object.fromEntries(courses.map(c => [c.id, c]))
       const regsEnriched = regs.map(r => ({ ...r, course: cmap[r.courseId] || null }))
-      return ok({ user: { id: me.id, name: me.name, email: me.email, phone: me.phone, role: me.role }, registrations: regsEnriched, telc_bookings: books, vocational_applications: apps, travel_consultations: cons })
+      return ok({ user: { id: me.id, name: me.name, email: me.email, phone: me.phone, role: me.role }, registrations: regsEnriched, vocational_applications: apps, travel_consultations: cons })
     }
     // Student access to course materials/grades/announcements/sessions
     if (segs[0] === 'student' && segs[1] === 'courses' && segs[2]) {
@@ -956,10 +907,9 @@ async function handle(request, { params }) {
           return ok({ ok: true, deleted: r.deletedCount })
         }
       }
-      // ===== UNIFIED INBOX — leads (course_registrations, telc_bookings, vocational, travel) =====
+      // ===== UNIFIED INBOX — leads (course_registrations, vocational, travel) =====
       const LEAD_COLLECTIONS = {
         'course-registrations': { coll: 'course_registrations', label: 'تسجيل كورس' },
-        'telc-bookings':        { coll: 'telc_bookings',        label: 'حجز telc' },
         'vocational-applications': { coll: 'vocational_applications', label: 'طلب Ausbildung' },
         'travel-consultations': { coll: 'travel_consultations', label: 'استشارة سفر' },
       }
@@ -1083,18 +1033,16 @@ async function handle(request, { params }) {
         }
       }
       if (segs[1] === 'stats' && method === 'GET') {
-        const [users, regs, books, apps, cons, contacts] = await Promise.all([
+        const [users, regs, apps, cons, contacts] = await Promise.all([
           db.collection('users').countDocuments(),
           db.collection('course_registrations').find({}, { projection: { _id: 0, price_usd: 1 } }).limit(10000).toArray(),
-          db.collection('telc_bookings').find({}, { projection: { _id: 0, price_usd: 1 } }).limit(10000).toArray(),
           db.collection('vocational_applications').countDocuments(),
           db.collection('travel_consultations').countDocuments(),
           db.collection('contact_messages').countDocuments(),
         ])
         const courseRevenue = regs.reduce((s, r) => s + (r.price_usd || 0), 0)
-        const examRevenue = books.reduce((s, r) => s + (r.price_usd || 0), 0)
         const byRole = await db.collection('users').aggregate([{ $group: { _id: '$role', count: { $sum: 1 } } }]).toArray()
-        return ok({ users, courseRegistrations: regs.length, telcBookings: books.length, vocationalApps: apps, consultations: cons, contactMessages: contacts, courseRevenue, examRevenue, totalRevenue: courseRevenue + examRevenue, byRole })
+        return ok({ users, courseRegistrations: regs.length, vocationalApps: apps, consultations: cons, contactMessages: contacts, courseRevenue, totalRevenue: courseRevenue, byRole })
       }
     }
 
@@ -1233,7 +1181,6 @@ async function handle(request, { params }) {
       }
 
       if (segs[1] === 'courses') { const r = await handleCrud('courses'); if (r) return r }
-      if (segs[1] === 'telc-exams') { const r = await handleCrud('telc_exams'); if (r) return r }
       if (segs[1] === 'jobs') { const r = await handleCrud('vocational_jobs'); if (r) return r }
 
       if (segs[1] === 'contact-messages') {

@@ -171,12 +171,12 @@ function HomeHeroEditor() {
         <div className="grid sm:grid-cols-2 gap-3 pt-3 border-t">
           <div><Label className="text-xs">زر 1 - النص</Label><Input value={data.cta1Label || ''} onChange={e => setData({ ...data, cta1Label: e.target.value })} placeholder="سجّل في كورس" /></div>
           <div><Label className="text-xs">زر 1 - الإجراء</Label><Input value={data.cta1Action || ''} onChange={e => setData({ ...data, cta1Action: e.target.value })} placeholder="goto:courses" /></div>
-          <div><Label className="text-xs">زر 2 - النص</Label><Input value={data.cta2Label || ''} onChange={e => setData({ ...data, cta2Label: e.target.value })} placeholder="احجز امتحان telc" /></div>
-          <div><Label className="text-xs">زر 2 - الإجراء</Label><Input value={data.cta2Action || ''} onChange={e => setData({ ...data, cta2Action: e.target.value })} placeholder="goto:telc" /></div>
+          <div><Label className="text-xs">زر 2 - النص</Label><Input value={data.cta2Label || ''} onChange={e => setData({ ...data, cta2Label: e.target.value })} placeholder="تواصل معنا" /></div>
+          <div><Label className="text-xs">زر 2 - الإجراء</Label><Input value={data.cta2Action || ''} onChange={e => setData({ ...data, cta2Action: e.target.value })} placeholder="goto:contact" /></div>
           <div><Label className="text-xs">زر 3 - النص (اتركه فارغ لإخفائه)</Label><Input value={data.cta3Label || ''} onChange={e => setData({ ...data, cta3Label: e.target.value })} placeholder="احجز استشارة" /></div>
           <div><Label className="text-xs">زر 3 - الإجراء</Label><Input value={data.cta3Action || ''} onChange={e => setData({ ...data, cta3Action: e.target.value })} placeholder="href:/visa-types#booking" /></div>
         </div>
-        <p className="text-[11px] text-neutral-500 leading-relaxed pt-2 border-t">💡 صيغ الإجراء: <code>goto:courses</code>, <code>goto:telc</code>, <code>href:/visa-types</code>, <code>signup</code>, <code>login</code></p>
+        <p className="text-[11px] text-neutral-500 leading-relaxed pt-2 border-t">💡 صيغ الإجراء: <code>goto:courses</code>, <code>goto:contact</code>, <code>href:/visa-types</code>, <code>signup</code>, <code>login</code></p>
       </CardContent></Card>
       <Button type="button" onClick={save} disabled={saving} className="btn-primary"><Save className="w-4 h-4 ms-1.5" />{saving ? 'جاري الحفظ...' : 'حفظ'}</Button>
     </div>
@@ -226,7 +226,7 @@ function HomeHighlightsEditor() {
               </div>
               <div className="md:col-span-4">
                 <Label className="text-xs">العنوان</Label>
-                <Input value={it.title || ''} onChange={e => update(idx, 'title', e.target.value)} placeholder="نسبة نجاح telc" />
+                <Input value={it.title || ''} onChange={e => update(idx, 'title', e.target.value)} placeholder="نسبة النجاح" />
               </div>
               <div className="md:col-span-3">
                 <Label className="text-xs">الأيقونة (اسم أو إيموجي)</Label>
@@ -475,7 +475,7 @@ function HomeCtaEditor() {
             <div>
               <Label className="text-xs">الإجراء</Label>
               <Input value={data[key]?.action || ''} onChange={e => updBtn(key, 'action', e.target.value)} />
-              <p className="text-[10px] text-neutral-500 mt-1">signup | goto:courses | goto:telc | href:/visa-types#booking</p>
+              <p className="text-[10px] text-neutral-500 mt-1">signup | goto:courses | goto:contact | href:/visa-types#booking</p>
             </div>
           </CardContent></Card>
         ))}

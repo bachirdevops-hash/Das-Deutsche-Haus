@@ -9,11 +9,6 @@ import { invalidateFeatureFlags } from '@/lib/useFeatureFlags'
 
 // Same meta as backend — kept in sync manually (small list)
 const FEATURE_META = {
-  telc: {
-    label_ar: 'صفحة telc والامتحانات',
-    hint_ar: 'تعطيل هذه الصفحة سيُخفي كل روابط telc من الموقع (Navbar، Footer، الصفحة الرئيسية). الزوّار الذين يفتحون /telc سيرون شاشة "قريباً" جميلة.',
-    icon: '📝',
-  },
   german_visitors: {
     label_ar: 'صفحة Für deutsche Besucher',
     hint_ar: 'تعطيل هذه الصفحة سيُخفي رابطها من الـ Navbar. الزوّار الذين يفتحونها مباشرة سيرون شاشة "قريباً".',

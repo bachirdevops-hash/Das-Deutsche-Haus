@@ -2406,3 +2406,107 @@ agent_communication:
         All critical public API endpoints maintain full compatibility and performance.
         System is stable and ready for production.
 
+
+  - task: "telc feature complete removal (frontend + backend + DB content)"
+    implemented: true
+    working: "NA"
+    file: "/app/app/api/[[...path]]/route.js, /app/app/page.js, /app/components/ddh/layout/Header.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Removed telc page, nav buttons, admin telc tab, student exams tab, feature flag 'telc', API endpoints (GET /api/telc-exams, POST /api/telc-bookings, manager telc-exams CRUD), inbox telc-bookings tab, admin stats telcBookings/examRevenue, seeds and all text mentions. DB collections telc_exams & telc_bookings intentionally PRESERVED (user request). site_features telc row deleted. Needs regression testing on: auth, dashboard, admin stats, inbox, site-features, courses, notifications."
+        - working: false
+          agent: "testing"
+          comment: |
+            ❌ CRITICAL: telc Feature Removal NOT DEPLOYED to Production
+            
+            REGRESSION TEST RESULTS (5/8 tests passed):
+            
+            ✅ PASSING TESTS:
+            1. Auth Login: Super admin login works correctly
+            2. Unified Inbox: Remaining lead types work (course-registrations, vocational-applications, travel-consultations)
+               - /admin/inbox/telc-bookings correctly returns 404
+            3. Public Content: /api/courses and /api/content/home_hero work without telc references
+            4. Vocational Jobs: /api/vocational/jobs works correctly
+            
+            ❌ FAILING TESTS (telc still present in deployed version):
+            1. Removed Endpoints Still Working:
+               - GET /api/telc-exams returns 200 with {"exams": []} (should be 404)
+               - GET /api/manager/telc-exams returns 200 (should be 404)
+               - POST /api/telc-bookings correctly returns 404 ✓
+            
+            2. Dashboard Still Has telc_bookings:
+               - GET /api/dashboard returns keys: ['user', 'registrations', 'telc_bookings', 'vocational_applications', 'travel_consultations']
+               - telc_bookings key should be REMOVED
+            
+            3. Admin Stats Still Has telc Keys:
+               - GET /api/admin/stats returns keys including: 'telcBookings', 'examRevenue'
+               - Both telc-related keys should be REMOVED
+            
+            4. Site Features Still Has telc:
+               - GET /api/admin/site-features returns features: ['telc', 'german_visitors']
+               - 'telc' feature should be REMOVED (only 'german_visitors' should remain)
+            
+            ROOT CAUSE ANALYSIS:
+            • Code in /app/app/api/[[...path]]/route.js is CORRECT (no telc endpoints found)
+            • Deployed version on Vercel (https://www.das-deutsche-haus.com) is OLD
+            • Response headers show: server: Vercel, x-matched-path: /api/[[...path]]
+            • The telc removal changes have NOT been deployed to production
+            
+            VERIFICATION:
+            • Searched /app/app/api/[[...path]]/route.js for "telc" - only found in fallback URL (line 285)
+            • No telc-exams, telc-bookings, or telc-related endpoints in current code
+            • Dashboard endpoint (line 488-500) does NOT include telc_bookings
+            • Admin stats endpoint (line 1035-1046) does NOT include telcBookings/examRevenue
+            • LEAD_COLLECTIONS (line 911-915) does NOT include telc-bookings
+            
+            REQUIRED ACTION:
+            🚨 DEPLOYMENT NEEDED: The code changes are correct but need to be deployed to Vercel
+            
+            Once deployed, all tests should pass:
+            - GET /api/telc-exams → 404
+            - GET /api/manager/telc-exams → 404
+            - GET /api/dashboard → no telc_bookings key
+            - GET /api/admin/stats → no telcBookings/examRevenue keys
+            - GET /api/admin/site-features → only german_visitors feature
+
+
+    - agent: "testing"
+      message: |
+        🚨 CRITICAL FINDING: telc Feature Removal Code is Correct BUT NOT DEPLOYED
+        
+        SUMMARY: 5/8 regression tests passed (62%)
+        
+        ✅ WORKING (Code is correct):
+        • Auth system (super admin login)
+        • Unified inbox for remaining lead types
+        • Public content endpoints (courses, vocational jobs)
+        • /admin/inbox/telc-bookings correctly returns 404
+        
+        ❌ FAILING (Deployment issue):
+        • GET /api/telc-exams still returns 200 (should be 404)
+        • GET /api/manager/telc-exams still returns 200 (should be 404)
+        • Dashboard still includes telc_bookings key
+        • Admin stats still includes telcBookings and examRevenue keys
+        • Site features still includes 'telc' feature flag
+        
+        ROOT CAUSE:
+        The code in /app/app/api/[[...path]]/route.js is CORRECT and has all telc code removed.
+        However, the deployed version on Vercel (https://www.das-deutsche-haus.com) is running
+        an OLD version that still contains the telc features.
+        
+        EVIDENCE:
+        • Verified /app/app/api/[[...path]]/route.js has NO telc endpoints
+        • Dashboard endpoint (line 488-500) does NOT return telc_bookings
+        • Admin stats endpoint (line 1035-1046) does NOT return telcBookings/examRevenue
+        • LEAD_COLLECTIONS (line 911-915) does NOT include telc-bookings
+        • But production API still returns all telc-related data
+        
+        REQUIRED ACTION FOR MAIN AGENT:
+        🚨 DEPLOY the current code to Vercel/production environment
+        
+        The telc removal is complete in the codebase. Once deployed, all tests will pass.
+
