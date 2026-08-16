@@ -132,6 +132,7 @@ function LeadList({ resource }) {
                 </div>
                 <div className="md:col-span-3">
                   <div className="text-sm font-semibold">{resource.titleField(item)}</div>
+                  {item.germanLevel && <div className="text-xs text-neutral-600 mt-0.5">Deutsch: {item.germanLevel}{item.country ? ` · ${item.country}` : ''}</div>}
                   {item.price_usd > 0 && <div className="text-xs text-neutral-600">${item.price_usd}</div>}
                 </div>
                 <div className="md:col-span-2">
@@ -274,6 +275,9 @@ function LeadDetailDialog({ item, resource, onClose, onSaved }) {
           <InfoRow label="الاسم" value={item.name} />
           <InfoRow label="البريد" value={item.email} />
           <InfoRow label="الهاتف" value={item.phone} dir="ltr" />
+          {item.country && <InfoRow label="البلد / المدينة" value={item.country} />}
+          {item.germanLevel && <InfoRow label="مستوى الألمانية" value={item.germanLevel} dir="ltr" />}
+          {item.education && <InfoRow label="المؤهل الدراسي" value={item.education} dir="ltr" />}
           {item.notes && <InfoRow label="ملاحظات العميل" value={item.notes} multiline />}
           {item.preferredDate && <InfoRow label="التاريخ المفضل" value={item.preferredDate} />}
           {item.consultationTypeName && <InfoRow label="نوع الاستشارة" value={item.consultationTypeName} />}

@@ -407,7 +407,8 @@ async function handle(request, { params }) {
       return ok({ courses: items })
     }
     if (path === 'vocational/jobs' && method === 'GET') {
-      const items = await db.collection('vocational_jobs').find({}, { projection: { _id: 0 } }).limit(100).toArray()
+      // 🌐 PUBLIC — only active Ausbildung offers are visible to visitors
+      const items = await db.collection('vocational_jobs').find({ is_active: { $ne: false } }, { projection: { _id: 0 } }).limit(100).toArray()
       return ok({ jobs: items })
     }
 
@@ -451,23 +452,55 @@ async function handle(request, { params }) {
       return ok({ registration: { ...reg, _id: undefined } })
     }
     if (path === 'vocational/applications' && method === 'POST') {
+      // 🌐 PUBLIC — Ausbildung application. Validated + rate-limited server-side.
+      const rl = rateLimit(`voc_apply:${ip}`, 8, 60000)
       const me = await getCurrentUser(db, request)
       const body = await request.json()
-      if (!me && (!body.name || !body.email || !body.phone)) {
-        return ok({ error: 'الاسم والبريد ورقم الهاتف مطلوبة' }, { status: 400 })
-      }
+      const de = body.lang === 'de'
+      const fail = (arMsg, deMsg, status = 400) => ok({ error: de ? deMsg : arMsg }, { status })
+      if (!rl.ok) return fail('محاولات كثيرة — يرجى المحاولة بعد قليل', 'Zu viele Versuche — bitte versuchen Sie es in Kürze erneut.', 429)
+
+      // Whitelist + normalize fields (never spread the raw body into the DB)
+      const name = String(body.name || me?.name || '').trim().slice(0, 120)
+      const email = String(body.email || me?.email || '').trim().toLowerCase().slice(0, 160)
+      const phone = String(body.phone || me?.phone || '').trim().slice(0, 40)
+      const country = String(body.country || '').trim().slice(0, 120)
+      const germanLevel = String(body.germanLevel || '').trim()
+      const education = String(body.education || '').trim().slice(0, 120)
+      const notes = String(body.notes || '').trim().slice(0, 2000)
+
+      if (!name) return fail('يرجى إدخال الاسم الكامل', 'Bitte geben Sie Ihren Vor- und Nachnamen ein.')
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return fail('يرجى إدخال بريد إلكتروني صحيح', 'Bitte geben Sie eine gültige E-Mail-Adresse ein.')
+      if (!phone) return fail('يرجى إدخال رقم الهاتف', 'Bitte geben Sie Ihre Telefonnummer ein.')
+      const GERMAN_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'Noch nicht gelernt']
+      if (!GERMAN_LEVELS.includes(germanLevel)) return fail('يرجى اختيار مستوى اللغة الألمانية', 'Bitte wählen Sie Ihre Deutschkenntnisse aus.')
+      if (!education) return fail('يرجى اختيار المؤهل الدراسي', 'Bitte wählen Sie Ihren Schulabschluss aus.')
+
+      // 🔒 Validate the selected Ausbildung server-side — never trust client titles
+      const job = await db.collection('vocational_jobs').findOne({ id: body.jobId })
+      if (!job || job.is_active === false) return fail('هذه الفرصة غير متاحة حالياً', 'Diese Ausbildung ist derzeit nicht verfügbar.', 404)
+
+      // 🛡️ Prevent duplicate/double submission: same email + same Ausbildung while still open
+      const dup = await db.collection('vocational_applications').findOne({
+        email, jobId: job.id, status: { $in: ['new', 'submitted', 'contacted', 'pending_payment'] },
+      })
+      if (dup) return fail('لديك طلب سابق لهذه الفرصة — سيتواصل معك فريقنا قريباً', 'Sie haben sich bereits für diese Ausbildung beworben. Wir melden uns in Kürze bei Ihnen.', 409)
+
       const a = {
         id: uuidv4(),
         userId: me?.id || null,
-        ...body,
-        email: (body.email || me?.email || '').toLowerCase(),
+        jobId: job.id,
+        jobTitle: job.title_ar,     // shown in the Arabic admin inbox
+        jobTitle_de: job.title_de,
+        name, email, phone, country, germanLevel, education, notes,
+        lang: de ? 'de' : 'ar',
         source: me ? 'authenticated' : 'public_form',
-        status: 'submitted',
+        status: 'new',
         createdAt: new Date().toISOString(),
       }
       await db.collection('vocational_applications').insertOne(a)
-      await logActivity(db, me, 'apply_job', 'vocational_application', a.id, { jobTitle: body.jobTitle, public: !me }, ip)
-      await notifyAdminsOfLead(db, 'vocational_application', `طلب Ausbildung جديد`, `${a.name || 'مجهول'} (${a.email}) قدّم طلب ${body.jobTitle || 'تدريب مهني'}`, a.id, a)
+      await logActivity(db, me, 'apply_job', 'vocational_application', a.id, { jobTitle: job.title_de, public: !me }, ip)
+      await notifyAdminsOfLead(db, 'vocational_application', `طلب Ausbildung جديد`, `${a.name} (${a.email}) قدّم طلب ${job.title_ar}`, a.id, a)
       return ok({ application: { ...a, _id: undefined } })
     }
     if (path === 'travel/consultations' && method === 'POST') {
