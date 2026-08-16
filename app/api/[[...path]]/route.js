@@ -3,14 +3,13 @@ import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import crypto from 'crypto'
 import { v2 as cloudinary } from 'cloudinary'
-import sgMail from '@sendgrid/mail'
 import { seedGermanVisitorsIfEmpty } from '@/lib/german_seed'
 import { seedBlogIfEmpty, slugifyTitle } from '@/lib/blog_seed'
 import { seedActivitiesIfEmpty, activitySlugify } from '@/lib/activities_seed'
 import { seedLegalPagesIfEmpty, LEGAL_PAGES } from '@/lib/legal_seed'
 import { seedSiteContentIfEmpty, CONTENT_KEYS } from '@/lib/site_content_seed'
 import { seedFeaturesIfEmpty, FEATURE_KEYS } from '@/lib/features'
-import { emailNewLeadToAdmin, emailConfirmationToLead, emailWelcomeUser, emailPasswordReset } from '@/lib/email'
+import { emailNewLeadToAdmin, emailConfirmationToLead, emailWelcomeUser, emailPasswordReset, sendEmail, ADMIN_EMAIL } from '@/lib/email'
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -23,28 +22,7 @@ function cloudinaryConfigured() {
   return !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
 }
 
-if (process.env.SENDGRID_API_KEY) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-}
-
-async function sendEmail({ to, subject, html, text }) {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.warn('[SendGrid not configured] Would send email to:', to, 'subject:', subject)
-    return { mocked: true, to, subject }
-  }
-  try {
-    const msg = {
-      to,
-      from: { email: process.env.SENDGRID_FROM_EMAIL || 'noreply@example.com', name: process.env.SENDGRID_FROM_NAME || 'Das Deutsche Haus' },
-      subject, text: text || subject, html,
-    }
-    await sgMail.send(msg)
-    return { sent: true }
-  } catch (e) {
-    console.error('SendGrid error:', e?.response?.body || e.message)
-    return { error: e.message }
-  }
-}
+// Legacy SendGrid mailer removed — all emails go through lib/email.js (Resend).
 
 // ---------- Rate Limiter (in-memory) ----------
 const rateLimitStore = new Map()
@@ -706,12 +684,26 @@ async function handle(request, { params }) {
         // Notify all super admins
         const admins = await db.collection('users').find({ role: { $in: ['super_admin', 'manager'] } }, { projection: { id: 1 } }).toArray()
         await notify(db, admins.map(a => a.id), { type: 'announcement', title: 'Neue Buchungsanfrage', text: `${name} (${email})`, link: 'admin/german/bookings' })
-        // Auto-reply email (silent if SendGrid not configured)
-        sendEmail({
-          to: email,
-          subject: 'Vielen Dank für Ihre Anfrage — Das Deutsche Haus',
-          html: `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1A1A1A"><div style="text-align:center;margin-bottom:24px"><div style="height:4px;background:linear-gradient(90deg,#1A1A1A 33%,#CC0000 33%,#CC0000 66%,#FFCE00 66%);border-radius:4px;width:80px;margin:0 auto 16px"></div><h2 style="margin:0;color:#1A1A1A">Willkommen!</h2></div><p>Hallo ${name},</p><p>vielen Dank für Ihre Buchungsanfrage. Wir haben Ihre Anfrage erhalten und melden uns innerhalb von <strong>24 Stunden</strong> bei Ihnen.</p><p style="background:#FFF8E0;border-left:3px solid #FFCE00;padding:12px;border-radius:6px"><strong>Anzahl Reisende:</strong> ${travelers || 1}<br/><strong>Reisedaten:</strong> ${dateFrom || '—'} bis ${dateTo || '—'}</p><p>Bei dringenden Fragen erreichen Sie uns 24/7 per WhatsApp.</p><p style="margin-top:32px;color:#999;font-size:12px">© Das Deutsche Haus · Syria ↔ Germany</p></div>`,
-        }).catch(() => {})
+        // 📧 Admin notification email (correct sendEmail(db, args) signature)
+        try {
+          await sendEmail(db, {
+            to: ADMIN_EMAIL,
+            subject: `Neue Buchungsanfrage (Deutsche Besucher) — ${name}`,
+            html: `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1A1A1A"><h2 style="margin:0 0 16px">Neue Buchungsanfrage</h2><table style="width:100%;border-collapse:collapse;font-size:14px">${[['Name', name], ['E-Mail', email], ['Telefon', phone], ['Reisedaten', `${dateFrom || '—'} bis ${dateTo || '—'}`], ['Reisende', travelers || 1], ['Paket', packageId || '—'], ['Wünsche', requests || '—']].map(([k, v]) => `<tr><td style="border:1px solid #eee;padding:8px;background:#fafafa;font-weight:700;width:140px">${k}</td><td style="border:1px solid #eee;padding:8px">${String(v).replace(/</g, '&lt;')}</td></tr>`).join('')}</table></div>`,
+            type: 'admin_german_booking',
+            meta: { bookingId: booking.id },
+          })
+        } catch {}
+        // 📧 Confirmation to the requester
+        try {
+          await sendEmail(db, {
+            to: email,
+            subject: 'Vielen Dank für Ihre Anfrage — Das Deutsche Haus',
+            html: `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1A1A1A"><div style="text-align:center;margin-bottom:24px"><div style="height:4px;background:linear-gradient(90deg,#1A1A1A 33%,#CC0000 33%,#CC0000 66%,#FFCE00 66%);border-radius:4px;width:80px;margin:0 auto 16px"></div><h2 style="margin:0;color:#1A1A1A">Willkommen!</h2></div><p>Hallo ${name},</p><p>vielen Dank für Ihre Buchungsanfrage. Wir haben Ihre Anfrage erhalten und melden uns innerhalb von <strong>24 Stunden</strong> bei Ihnen.</p><p style="background:#FFF8E0;border-left:3px solid #FFCE00;padding:12px;border-radius:6px"><strong>Anzahl Reisende:</strong> ${travelers || 1}<br/><strong>Reisedaten:</strong> ${dateFrom || '—'} bis ${dateTo || '—'}</p><p>Bei dringenden Fragen erreichen Sie uns per WhatsApp.</p><p style="margin-top:32px;color:#999;font-size:12px">© Das Deutsche Haus · Syria ↔ Germany</p></div>`,
+            type: 'confirm_german_booking',
+            meta: { bookingId: booking.id },
+          })
+        } catch {}
         return ok({ ok: true, message: 'Vielen Dank! Wir melden uns innerhalb von 24 Stunden.' })
       }
 
@@ -732,11 +724,26 @@ async function handle(request, { params }) {
         await db.collection('german_service_requests').insertOne(req)
         const admins = await db.collection('users').find({ role: { $in: ['super_admin', 'manager'] } }, { projection: { id: 1 } }).toArray()
         await notify(db, admins.map(a => a.id), { type: 'announcement', title: 'Neue Service-Anfrage', text: `${name} — ${(req.services || []).length} Leistungen`, link: 'admin/german/service-requests' })
-        sendEmail({
-          to: email,
-          subject: 'Vielen Dank — Ihre Service-Anfrage ist bei uns',
-          html: `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1A1A1A"><div style="text-align:center;margin-bottom:24px"><div style="height:4px;background:linear-gradient(90deg,#1A1A1A 33%,#CC0000 33%,#CC0000 66%,#FFCE00 66%);border-radius:4px;width:80px;margin:0 auto 16px"></div><h2 style="margin:0">Vielen Dank, ${name}!</h2></div><p>Wir haben Ihre Service-Anfrage erhalten und melden uns innerhalb von <strong>24 Stunden</strong> bei Ihnen.</p><p style="background:#FFF8E0;border-left:3px solid #FFCE00;padding:12px;border-radius:6px"><strong>Ausgewählte Leistungen:</strong> ${(req.services || []).length}<br/><strong>Aktueller Standort:</strong> ${location || '—'}</p><p>Wir freuen uns darauf, Ihnen Ihre Reise nach Syrien zu erleichtern.</p></div>`,
-        }).catch(() => {})
+        // 📧 Admin notification email
+        try {
+          await sendEmail(db, {
+            to: ADMIN_EMAIL,
+            subject: `Neue Service-Anfrage (Deutsche Besucher) — ${name}`,
+            html: `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1A1A1A"><h2 style="margin:0 0 16px">Neue Service-Anfrage</h2><table style="width:100%;border-collapse:collapse;font-size:14px">${[['Name', name], ['E-Mail', email], ['WhatsApp', whatsapp], ['Standort', location || '—'], ['Reisedaten', `${dateFrom || '—'} bis ${dateTo || '—'}`], ['Reisende', travelers || 1], ['Leistungen', (req.services || []).join(', ') || '—'], ['Notizen', notes || '—']].map(([k, v]) => `<tr><td style="border:1px solid #eee;padding:8px;background:#fafafa;font-weight:700;width:140px">${k}</td><td style="border:1px solid #eee;padding:8px">${String(v).replace(/</g, '&lt;')}</td></tr>`).join('')}</table></div>`,
+            type: 'admin_german_service',
+            meta: { requestId: req.id },
+          })
+        } catch {}
+        // 📧 Confirmation to the requester
+        try {
+          await sendEmail(db, {
+            to: email,
+            subject: 'Vielen Dank — Ihre Service-Anfrage ist bei uns',
+            html: `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1A1A1A"><div style="text-align:center;margin-bottom:24px"><div style="height:4px;background:linear-gradient(90deg,#1A1A1A 33%,#CC0000 33%,#CC0000 66%,#FFCE00 66%);border-radius:4px;width:80px;margin:0 auto 16px"></div><h2 style="margin:0">Vielen Dank, ${name}!</h2></div><p>Wir haben Ihre Service-Anfrage erhalten und melden uns innerhalb von <strong>24 Stunden</strong> bei Ihnen.</p><p style="background:#FFF8E0;border-left:3px solid #FFCE00;padding:12px;border-radius:6px"><strong>Ausgewählte Leistungen:</strong> ${(req.services || []).length}<br/><strong>Aktueller Standort:</strong> ${location || '—'}</p><p>Wir freuen uns darauf, Ihnen Ihre Reise nach Syrien zu erleichtern.</p></div>`,
+            type: 'confirm_german_service',
+            meta: { requestId: req.id },
+          })
+        } catch {}
         return ok({ ok: true, message: 'Vielen Dank! Wir melden uns innerhalb von 24 Stunden bei Ihnen.' })
       }
     }

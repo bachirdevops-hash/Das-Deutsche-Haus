@@ -115,6 +115,7 @@ export default function GermanVisitorsPage() {
 
 // ============== TOP NAV ==============
 function TopNav({ settings, waNumber }) {
+  const waDisplay = (settings?.whatsapp_number || '').trim() || '+49 1525 4196668'
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-b border-neutral-200 shadow-sm">
       <div className="h-1 flex"><div className="flex-1 bg-[#1A1A1A]" /><div className="flex-1 bg-[#CC0000]" /><div className="flex-1 bg-[#FFCE00]" /></div>
@@ -130,7 +131,7 @@ function TopNav({ settings, waNumber }) {
           <a href="#booking" className="hover:text-[#CC0000] transition">Buchen</a>
         </nav>
         <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold text-sm transition shadow-md">
-          <MessageCircle className="w-4 h-4" /> WhatsApp 24/7
+          <MessageCircle className="w-4 h-4" /> WhatsApp <span dir="ltr" className="font-black">{waDisplay}</span>
         </a>
       </div>
     </header>
@@ -607,7 +608,7 @@ function EmergencySection({ embassies, syriaEm, ddhSupport, waNumber }) {
             <div className="flex-1">
               <div className="text-2xl font-black mb-2">{ddhSupport?.name || 'WhatsApp Support'}</div>
               <div className="text-3xl font-black text-[#FFCE00] mb-1">{ddhSupport?.phone}</div>
-              <div className="text-xs text-green-100/80 mb-4">{ddhSupport?.address || 'Deutsch & Englisch · 24/7'}</div>
+              <div className="text-xs text-green-100/80 mb-4">{ddhSupport?.address || 'Deutsch & Englisch'}</div>
             </div>
             <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer" className="block w-full py-3.5 bg-white text-green-700 font-bold rounded-xl text-center hover:bg-green-50 transition">
               <MessageCircle className="inline w-4 h-4 mr-2" />WhatsApp öffnen
@@ -624,7 +625,7 @@ function StickyEmergencyBar({ waNumber }) {
   return (
     <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noreferrer" className="fixed bottom-5 right-5 z-50 inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-3.5 rounded-full font-bold shadow-2xl hover:scale-105 transition">
       <MessageCircle className="w-5 h-5" />
-      <span className="hidden sm:inline">24/7 Support</span>
+      <span className="hidden sm:inline">WhatsApp</span>
     </a>
   )
 }

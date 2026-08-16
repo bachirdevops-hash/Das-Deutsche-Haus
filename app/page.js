@@ -227,7 +227,20 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
     if (!action) return
     if (action === 'signup') return setAuthMode('signup')
     if (action === 'login') return setAuthMode('login')
-    if (action.startsWith('goto:')) return goto(action.slice(5))
+    if (action.startsWith('goto:')) {
+      // Supports 'goto:page' and 'goto:page#section' — lands directly on the section/form
+      const [pg, anchor] = action.slice(5).split('#')
+      goto(pg)
+      if (anchor) {
+        let tries = 0
+        const timer = setInterval(() => {
+          const el = document.getElementById(anchor)
+          if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); clearInterval(timer) }
+          else if (++tries > 20) clearInterval(timer)
+        }, 150)
+      }
+      return
+    }
     if (action.startsWith('href:')) { window.location.href = action.slice(5); return }
     if (action.startsWith('http')) { window.open(action, '_blank'); return }
     if (action.startsWith('/')) { window.location.href = action; return }
@@ -1116,7 +1129,7 @@ function Contact({ t, lang }) {
       <div className="container mx-auto px-4">
         <PageHero img={LEHRER_IMG} title={t.contact.title} sub={lang === 'ar' ? 'نحن هنا لإجابتك' : 'Wir sind für Sie da'} />
         <div className="grid lg:grid-cols-2 gap-8">
-          <Card><CardHeader><CardTitle>{lang === 'ar' ? 'أرسل رسالة' : 'Nachricht'}</CardTitle></CardHeader><CardContent>
+          <Card id="contact-form" className="scroll-mt-28"><CardHeader><CardTitle>{lang === 'ar' ? 'أرسل رسالة' : 'Nachricht'}</CardTitle></CardHeader><CardContent>
             <form onSubmit={submit} className="space-y-3">
               <div><Label>{t.contact.name}</Label><Input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
               <div><Label>{t.contact.email}</Label><Input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
