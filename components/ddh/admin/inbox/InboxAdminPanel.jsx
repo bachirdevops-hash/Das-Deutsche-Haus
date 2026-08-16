@@ -10,9 +10,80 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { Inbox, BookOpen, Award, Briefcase, Plane, Mail, Phone, Calendar, Trash2, Eye, RefreshCw, MessageSquare } from 'lucide-react'
+import { Inbox, BookOpen, Award, Briefcase, Plane, Mail, Phone, Calendar, Trash2, Eye, RefreshCw, MessageSquare, Printer } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ddh/shared'
 import { ErrorBoundary } from '@/components/ddh/ErrorBoundary'
+
+const STATUS_LABELS = {
+  new: 'جديد', pending_payment: 'بانتظار الدفع', contacted: 'تم التواصل', converted: 'معتمد',
+  closed: 'مغلق', reserved: 'محجوز', submitted: 'مُقدّم', pending: 'معلّق', confirmed: 'مؤكد', cancelled: 'ملغى',
+}
+
+// 🖨️ Opens a clean, printer-friendly page for a single request and triggers the
+// browser print dialog — from there the admin can print or save as PDF directly.
+function printLead(item, resource) {
+  const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  const row = (label, value, ltr = false) => (value === undefined || value === null || value === '') ? '' :
+    `<tr><th>${esc(label)}</th><td${ltr ? ' dir="ltr" style="text-align:left"' : ''}>${esc(value).replace(/\n/g, '<br/>')}</td></tr>`
+  const dateStr = (d) => { try { return new Date(d).toLocaleString('ar-EG-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short' }) } catch { return d || '' } }
+
+  const rows = [
+    row('نوع الطلب', resource.label),
+    row('الموضوع', resource.titleField(item)),
+    row('الاسم', item.name),
+    row('البريد الإلكتروني', item.email, true),
+    row('الهاتف', item.phone, true),
+    row('البلد / المدينة', item.country),
+    row('مستوى الألمانية', item.germanLevel, true),
+    row('المؤهل الدراسي', item.education, true),
+    row('نوع الاستشارة', item.consultationTypeName),
+    row('موعد الاستشارة', item.slotDate ? `${item.slotDate} — ${item.slotTime || ''}` : ''),
+    row('التاريخ المفضل', item.preferredDate),
+    row('المدة (دقائق)', item.durationMinutes),
+    row('السعر', item.price > 0 ? `$${item.price}` : ''),
+    row('رسالة العميل', item.message || item.notes),
+    row('ملاحظات الإدارة', item.adminNotes),
+    row('الحالة', STATUS_LABELS[item.status || 'new'] || item.status),
+    row('المصدر', item.source === 'public_form' ? 'نموذج عام (بدون حساب)' : 'مستخدم مسجّل'),
+    row('تاريخ الطلب', dateStr(item.createdAt)),
+    row('رقم الطلب', item.id, true),
+  ].join('')
+
+  const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"/>
+<title>${esc(resource.label)} — ${esc(item.name || '')}</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: #1A1A1A; margin: 0; padding: 32px; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1A1A1A; padding-bottom: 14px; margin-bottom: 6px; }
+  .brand { font-size: 22px; font-weight: 900; }
+  .brand small { display: block; font-size: 12px; font-weight: 400; color: #666; margin-top: 2px; }
+  .flag { height: 6px; background: linear-gradient(to left, #000 33%, #CC0000 33% 66%, #FFCC00 66%); margin-bottom: 22px; }
+  h1 { font-size: 17px; margin: 0 0 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { border: 1px solid #ddd; padding: 9px 12px; vertical-align: top; text-align: right; }
+  th { background: #f7f7f5; width: 170px; font-weight: 700; color: #444; }
+  .foot { margin-top: 26px; font-size: 11px; color: #888; display: flex; justify-content: space-between; }
+  @media print { body { padding: 0; } .noprint { display: none; } }
+  .noprint { margin-top: 24px; text-align: center; }
+  .noprint button { background: #1A1A1A; color: #fff; border: 0; padding: 10px 26px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+</style></head><body>
+  <div class="head">
+    <div class="brand">Das Deutsche Haus<small>das-deutsche-haus.com — info@das-deutsche-haus.com</small></div>
+    <div style="font-size:12px;color:#666">تاريخ الطباعة: ${dateStr(Date.now())}</div>
+  </div>
+  <div class="flag"></div>
+  <h1>${esc(resource.label)}${item.name ? ' — ' + esc(item.name) : ''}</h1>
+  <table>${rows}</table>
+  <div class="foot"><span>Das Deutsche Haus — وثيقة داخلية</span><span>${esc(item.id || '')}</span></div>
+  <div class="noprint"><button onclick="window.print()">طباعة / حفظ PDF</button></div>
+  <script>window.addEventListener('load', function(){ setTimeout(function(){ window.print() }, 350) })</script>
+</body></html>`
+
+  const w = window.open('', '_blank')
+  if (!w) { toast.error('يرجى السماح بالنوافذ المنبثقة للطباعة') ; return }
+  w.document.write(html)
+  w.document.close()
+}
 
 const RESOURCES = [
   { key: 'course-registrations', label: 'تسجيلات الكورسات', icon: BookOpen, color: '#CC0000', titleField: (it) => it.courseName || it.level || 'كورس' },
@@ -142,6 +213,7 @@ function LeadList({ resource }) {
                 </div>
                 <div className="md:col-span-4 flex gap-1.5 justify-end flex-wrap">
                   <Button size="sm" variant="outline" onClick={() => setViewing(item)}><Eye className="w-3.5 h-3.5 ms-1" />عرض</Button>
+                  <Button size="sm" variant="outline" onClick={() => printLead(item, resource)} title="طباعة / حفظ PDF"><Printer className="w-3.5 h-3.5 ms-1" />طباعة</Button>
                   <Select value={item.status || 'new'} onValueChange={(v) => updateStatus(item.id, v)}>
                     <SelectTrigger className="h-9 w-32 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -222,6 +294,7 @@ function LeadDetailDialog({ item, resource, onClose, onSaved }) {
           </div>
         </div>
         <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => printLead({ ...item, adminNotes }, resource)}><Printer className="w-4 h-4 ms-1.5" />طباعة</Button>
           <Button variant="outline" onClick={onClose}>إغلاق</Button>
           <Button onClick={save} className="btn-primary">حفظ الملاحظات</Button>
         </DialogFooter>
