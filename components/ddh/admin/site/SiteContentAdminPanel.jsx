@@ -61,7 +61,8 @@ function HomeContentManager() {
     <Tabs defaultValue="hero">
       <TabsList className="flex flex-wrap gap-1 bg-neutral-100 p-1 rounded-xl mb-5">
         <TabsTrigger value="hero" className="data-[state=active]:bg-white"><HomeIcon className="w-4 h-4 ms-1.5" />Hero</TabsTrigger>
-        <TabsTrigger value="highlights" className="data-[state=active]:bg-white"><Award className="w-4 h-4 ms-1.5" />3 بطاقات مميّزة</TabsTrigger>
+        <TabsTrigger value="services" className="data-[state=active]:bg-white"><Award className="w-4 h-4 ms-1.5" />ماذا نقدم (4 بطاقات)</TabsTrigger>
+        <TabsTrigger value="journey" className="data-[state=active]:bg-white"><Star className="w-4 h-4 ms-1.5" />خطوات الرحلة</TabsTrigger>
         <TabsTrigger value="stats" className="data-[state=active]:bg-white"><Sparkles className="w-4 h-4 ms-1.5" />الإحصائيات</TabsTrigger>
         <TabsTrigger value="why" className="data-[state=active]:bg-white"><Star className="w-4 h-4 ms-1.5" />لماذا نحن</TabsTrigger>
         <TabsTrigger value="featured" className="data-[state=active]:bg-white"><Sparkles className="w-4 h-4 ms-1.5" />الكورسات المميّزة</TabsTrigger>
@@ -71,7 +72,8 @@ function HomeContentManager() {
         <TabsTrigger value="cta" className="data-[state=active]:bg-white"><Award className="w-4 h-4 ms-1.5" />CTA</TabsTrigger>
       </TabsList>
       <TabsContent value="hero"><HomeHeroEditor /></TabsContent>
-      <TabsContent value="highlights"><HomeHighlightsEditor /></TabsContent>
+      <TabsContent value="services"><HomeServicesEditor /></TabsContent>
+      <TabsContent value="journey"><HomeJourneyEditor /></TabsContent>
       <TabsContent value="stats"><HomeStatsEditor /></TabsContent>
       <TabsContent value="why"><HomeWhyEditor /></TabsContent>
       <TabsContent value="featured"><SimpleSectionEditor contentKey="home_featured" title="إعدادات قسم الكورسات المميّزة" fields={[
@@ -179,6 +181,180 @@ function HomeHeroEditor() {
         <p className="text-[11px] text-neutral-500 leading-relaxed pt-2 border-t">💡 صيغ الإجراء: <code>goto:courses</code>, <code>goto:contact</code>, <code>href:/visa-types</code>, <code>signup</code>, <code>login</code></p>
       </CardContent></Card>
       <Button type="button" onClick={save} disabled={saving} className="btn-primary"><Save className="w-4 h-4 ms-1.5" />{saving ? 'جاري الحفظ...' : 'حفظ'}</Button>
+    </div>
+  )
+}
+
+// ===== Home: Services Editor (V2 — "ماذا نقدم؟" 4 cards) =====
+function HomeServicesEditor() {
+  const [data, setData] = useState(null)
+  const [saving, setSaving] = useState(false)
+  useEffect(() => { apiGet('/api/admin/content/home_services').then(d => setData(d.data || { items: [] })) }, [])
+  const update = (idx, field, value) => {
+    const items = [...(data.items || [])]
+    items[idx] = { ...items[idx], [field]: value }
+    setData({ ...data, items })
+  }
+  const move = (idx, dir) => {
+    const items = [...(data.items || [])]
+    const j = idx + dir
+    if (j < 0 || j >= items.length) return
+    ;[items[idx], items[j]] = [items[j], items[idx]]
+    items.forEach((it, i) => it.order = i + 1)
+    setData({ ...data, items })
+  }
+  const add = () => {
+    const items = [...(data.items || []), { id: crypto.randomUUID(), icon: 'Star', color: '#CC0000', title_ar: 'خدمة جديدة', title_de: '', desc_ar: 'وصف...', desc_de: '', cta_ar: 'اعرف أكثر', cta_de: 'Mehr erfahren', action: 'goto:contact', order: (data.items?.length || 0) + 1 }]
+    setData({ ...data, items })
+  }
+  const remove = (idx) => setData({ ...data, items: (data.items || []).filter((_, i) => i !== idx) })
+  const save = async () => {
+    setSaving(true)
+    const r = await apiSend('/api/admin/content/home_services', 'PATCH', { data })
+    setSaving(false)
+    if (r.error) toast.error(r.error); else toast.success('تم الحفظ ✓')
+  }
+  if (!data) return <Loading />
+  return (
+    <div className="space-y-4">
+      <PanelHeader title="قسم «ماذا نقدم؟» — بطاقات الخدمات تحت الـ Hero" desc="لكل بطاقة: أيقونة (اسم من lucide مثل BookOpen)، لون، عنوان ووصف بالعربي والألماني، نص زر، وإجراء." />
+      <div className="grid gap-3">
+        {(data.items || []).map((it, idx) => (
+          <Card key={it.id || idx} className="border">
+            <CardContent className="p-4 grid md:grid-cols-12 gap-3">
+              <div className="md:col-span-3">
+                <Label className="text-xs">الأيقونة (lucide)</Label>
+                <Input dir="ltr" value={it.icon || ''} onChange={e => update(idx, 'icon', e.target.value)} placeholder="BookOpen" />
+              </div>
+              <div className="md:col-span-3">
+                <Label className="text-xs">اللون</Label>
+                <div className="flex gap-1.5">
+                  <Input type="color" value={it.color || '#CC0000'} onChange={e => update(idx, 'color', e.target.value)} className="w-12 p-1 h-9" />
+                  <Input value={it.color || '#CC0000'} onChange={e => update(idx, 'color', e.target.value)} className="flex-1" />
+                </div>
+              </div>
+              <div className="md:col-span-6">
+                <Label className="text-xs">الإجراء</Label>
+                <Input dir="ltr" value={it.action || ''} onChange={e => update(idx, 'action', e.target.value)} placeholder="goto:courses | goto:vocational | goto:travel | href:/visa-types#booking" />
+              </div>
+              <div className="md:col-span-6">
+                <Label className="text-xs">🇸🇾 العنوان (عربي)</Label>
+                <Input value={it.title_ar || ''} onChange={e => update(idx, 'title_ar', e.target.value)} />
+              </div>
+              <div className="md:col-span-6">
+                <Label className="text-xs">🇩🇪 Titel (Deutsch)</Label>
+                <Input dir="ltr" value={it.title_de || ''} onChange={e => update(idx, 'title_de', e.target.value)} />
+              </div>
+              <div className="md:col-span-6">
+                <Label className="text-xs">🇸🇾 الوصف (عربي)</Label>
+                <Textarea rows={2} value={it.desc_ar || ''} onChange={e => update(idx, 'desc_ar', e.target.value)} />
+              </div>
+              <div className="md:col-span-6">
+                <Label className="text-xs">🇩🇪 Beschreibung</Label>
+                <Textarea dir="ltr" rows={2} value={it.desc_de || ''} onChange={e => update(idx, 'desc_de', e.target.value)} />
+              </div>
+              <div className="md:col-span-4">
+                <Label className="text-xs">🇸🇾 نص الزر (عربي)</Label>
+                <Input value={it.cta_ar || ''} onChange={e => update(idx, 'cta_ar', e.target.value)} />
+              </div>
+              <div className="md:col-span-4">
+                <Label className="text-xs">🇩🇪 Button-Text</Label>
+                <Input dir="ltr" value={it.cta_de || ''} onChange={e => update(idx, 'cta_de', e.target.value)} />
+              </div>
+              <div className="md:col-span-4 flex gap-1 justify-end items-end">
+                <Button type="button" size="icon" variant="outline" onClick={() => move(idx, -1)} disabled={idx === 0}><ArrowUp className="w-4 h-4" /></Button>
+                <Button type="button" size="icon" variant="outline" onClick={() => move(idx, 1)} disabled={idx === (data.items?.length || 0) - 1}><ArrowDown className="w-4 h-4" /></Button>
+                <Button type="button" size="icon" variant="outline" className="text-red-600" onClick={() => remove(idx)}><Trash2 className="w-4 h-4" /></Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" onClick={add}><Plus className="w-4 h-4 ms-1.5" />إضافة بطاقة</Button>
+        <Button type="button" onClick={save} disabled={saving} className="btn-primary"><Save className="w-4 h-4 ms-1.5" />{saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}</Button>
+      </div>
+    </div>
+  )
+}
+
+// ===== Home: Journey Editor (V2 — "كيف تبدأ رحلتك؟" steps) =====
+function HomeJourneyEditor() {
+  const [data, setData] = useState(null)
+  const [saving, setSaving] = useState(false)
+  useEffect(() => { apiGet('/api/admin/content/home_journey').then(d => setData(d.data || { steps: [] })) }, [])
+  const set = (field, value) => setData({ ...data, [field]: value })
+  const update = (idx, field, value) => {
+    const steps = [...(data.steps || [])]
+    steps[idx] = { ...steps[idx], [field]: value }
+    setData({ ...data, steps })
+  }
+  const move = (idx, dir) => {
+    const steps = [...(data.steps || [])]
+    const j = idx + dir
+    if (j < 0 || j >= steps.length) return
+    ;[steps[idx], steps[j]] = [steps[j], steps[idx]]
+    steps.forEach((it, i) => it.order = i + 1)
+    setData({ ...data, steps })
+  }
+  const add = () => {
+    const steps = [...(data.steps || []), { id: crypto.randomUUID(), title_ar: 'خطوة جديدة', title_de: '', desc_ar: '', desc_de: '', order: (data.steps?.length || 0) + 1 }]
+    setData({ ...data, steps })
+  }
+  const remove = (idx) => setData({ ...data, steps: (data.steps || []).filter((_, i) => i !== idx) })
+  const save = async () => {
+    setSaving(true)
+    const r = await apiSend('/api/admin/content/home_journey', 'PATCH', { data })
+    setSaving(false)
+    if (r.error) toast.error(r.error); else toast.success('تم الحفظ ✓')
+  }
+  if (!data) return <Loading />
+  return (
+    <div className="space-y-4">
+      <PanelHeader title="قسم «كيف تبدأ رحلتك؟» — الخطوات" desc="العناوين والخطوات وزر النهاية. الأرقام تتولّد تلقائياً حسب الترتيب." />
+      <Card><CardContent className="p-4 grid sm:grid-cols-2 gap-3">
+        <div><Label className="text-xs">🇸🇾 الشارة الصغيرة</Label><Input value={data.label_ar || ''} onChange={e => set('label_ar', e.target.value)} placeholder="الطريق خطوة بخطوة" /></div>
+        <div><Label className="text-xs">🇩🇪 Badge</Label><Input dir="ltr" value={data.label_de || ''} onChange={e => set('label_de', e.target.value)} placeholder="Schritt für Schritt" /></div>
+        <div><Label className="text-xs">🇸🇾 العنوان</Label><Input value={data.title_ar || ''} onChange={e => set('title_ar', e.target.value)} /></div>
+        <div><Label className="text-xs">🇩🇪 Titel</Label><Input dir="ltr" value={data.title_de || ''} onChange={e => set('title_de', e.target.value)} /></div>
+        <div><Label className="text-xs">🇸🇾 العنوان الفرعي</Label><Input value={data.subtitle_ar || ''} onChange={e => set('subtitle_ar', e.target.value)} /></div>
+        <div><Label className="text-xs">🇩🇪 Untertitel</Label><Input dir="ltr" value={data.subtitle_de || ''} onChange={e => set('subtitle_de', e.target.value)} /></div>
+        <div><Label className="text-xs">🇸🇾 نص زر النهاية</Label><Input value={data.ctaLabel_ar || ''} onChange={e => set('ctaLabel_ar', e.target.value)} /></div>
+        <div><Label className="text-xs">🇩🇪 Button-Text</Label><Input dir="ltr" value={data.ctaLabel_de || ''} onChange={e => set('ctaLabel_de', e.target.value)} /></div>
+        <div className="sm:col-span-2"><Label className="text-xs">إجراء الزر</Label><Input dir="ltr" value={data.ctaAction || ''} onChange={e => set('ctaAction', e.target.value)} placeholder="goto:contact" /></div>
+      </CardContent></Card>
+      <div className="grid gap-3">
+        {(data.steps || []).map((st, idx) => (
+          <Card key={st.id || idx} className="border">
+            <CardContent className="p-4 grid md:grid-cols-12 gap-3 items-end">
+              <div className="md:col-span-1 text-center">
+                <div className="w-10 h-10 rounded-full bg-[#FFCE00] text-[#1A1A1A] font-black flex items-center justify-center mx-auto">{idx + 1}</div>
+              </div>
+              <div className="md:col-span-5">
+                <Label className="text-xs">🇸🇾 عنوان الخطوة</Label>
+                <Input value={st.title_ar || ''} onChange={e => update(idx, 'title_ar', e.target.value)} />
+                <Label className="text-xs mt-2 block">🇸🇾 الوصف</Label>
+                <Input value={st.desc_ar || ''} onChange={e => update(idx, 'desc_ar', e.target.value)} />
+              </div>
+              <div className="md:col-span-4">
+                <Label className="text-xs">🇩🇪 Titel</Label>
+                <Input dir="ltr" value={st.title_de || ''} onChange={e => update(idx, 'title_de', e.target.value)} />
+                <Label className="text-xs mt-2 block">🇩🇪 Beschreibung</Label>
+                <Input dir="ltr" value={st.desc_de || ''} onChange={e => update(idx, 'desc_de', e.target.value)} />
+              </div>
+              <div className="md:col-span-2 flex gap-1 justify-end">
+                <Button type="button" size="icon" variant="outline" onClick={() => move(idx, -1)} disabled={idx === 0}><ArrowUp className="w-4 h-4" /></Button>
+                <Button type="button" size="icon" variant="outline" onClick={() => move(idx, 1)} disabled={idx === (data.steps?.length || 0) - 1}><ArrowDown className="w-4 h-4" /></Button>
+                <Button type="button" size="icon" variant="outline" className="text-red-600" onClick={() => remove(idx)}><Trash2 className="w-4 h-4" /></Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" onClick={add}><Plus className="w-4 h-4 ms-1.5" />إضافة خطوة</Button>
+        <Button type="button" onClick={save} disabled={saving} className="btn-primary"><Save className="w-4 h-4 ms-1.5" />{saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}</Button>
+      </div>
     </div>
   )
 }

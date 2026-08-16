@@ -37,6 +37,16 @@ import JobsAdminPanel from '@/components/ddh/admin/jobs/JobsAdminPanel'
 import FeatureFlagsAdminPanel from '@/components/ddh/admin/features/FeatureFlagsAdminPanel'
 import { useFeatureFlags } from '@/lib/useFeatureFlags'
 import { getIcon, fetchContent, fetchList } from '@/lib/content'
+import { DEFAULT_HOME_HERO, DEFAULT_HOME_SERVICES, DEFAULT_HOME_JOURNEY } from '@/lib/site_content_seed'
+
+// Highlight the word "Ausbildung" in gold inside dynamic hero titles
+const renderHeroTitle = (title) => {
+  const s = String(title || '')
+  if (!s.includes('Ausbildung')) return s
+  const parts = s.split('Ausbildung')
+  return parts.flatMap((p, i) => i === 0 ? [p] : [<span key={i} className="text-[#FFCE00]">Ausbildung</span>, p])
+}
+const AR_NUMS = ['١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩', '١٠']
 
 // ==================== App ====================
 function App() {
@@ -173,8 +183,9 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
     if (flags.german_visitors === false && action.includes('/german-visitors')) return false
     return true
   }
-  const [hero, setHero] = useState({})
-  const [highlights, setHighlights] = useState({ items: [] })
+  const [hero, setHero] = useState(DEFAULT_HOME_HERO)
+  const [services, setServices] = useState(DEFAULT_HOME_SERVICES)
+  const [journey, setJourney] = useState(DEFAULT_HOME_JOURNEY)
   const [featured, setFeatured] = useState({})
   const [stats, setStats] = useState({ items: [] })
   const [why, setWhy] = useState({ cards: [] })
@@ -188,8 +199,9 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
   const [activities, setActivities] = useState([])
 
   useEffect(() => {
-    fetchContent('home_hero').then(setHero)
-    fetchContent('home_highlights').then(setHighlights)
+    fetchContent('home_hero').then(d => setHero(Object.keys(d || {}).length ? d : DEFAULT_HOME_HERO))
+    fetchContent('home_services').then(d => setServices(d?.items?.length ? d : DEFAULT_HOME_SERVICES))
+    fetchContent('home_journey').then(d => setJourney(d?.steps?.length ? d : DEFAULT_HOME_JOURNEY))
     fetchContent('home_featured').then(setFeatured)
     fetchContent('home_stats').then(setStats)
     fetchContent('home_why').then(setWhy)
@@ -238,21 +250,17 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
               </div>
             )}
             <h1 className="text-4xl md:text-6xl font-black leading-tight mb-5 tracking-tight">
-              {lang === 'de'
-                ? <>Deutsch lernen, <span className="text-[#FFCE00]">Ausbildung</span> sichern — und nach Deutschland reisen.</>
-                : <>تعلّم الألمانية، احصل على <span className="text-[#FFCE00]">Ausbildung</span>، وسافر إلى ألمانيا.</>}
+              {renderHeroTitle((lang === 'de' ? hero?.title_de : hero?.title_ar) || (lang === 'de' ? DEFAULT_HOME_HERO.title_de : DEFAULT_HOME_HERO.title_ar))}
             </h1>
             <p className="text-lg md:text-xl text-white/90 mb-8 leading-relaxed max-w-2xl">
-              {lang === 'de'
-                ? 'Online-Sprachkurse und persönliche Beratung — wir begleiten dich Schritt für Schritt bis nach Deutschland.'
-                : 'كورسات لغة أونلاين واستشارات شخصية — نرافقك خطوة بخطوة من أول درس حتى وصولك إلى ألمانيا.'}
+              {(lang === 'de' ? hero?.desc_de : hero?.desc_ar) || (lang === 'de' ? DEFAULT_HOME_HERO.desc_de : DEFAULT_HOME_HERO.desc_ar)}
             </p>
             <div className="flex flex-wrap items-center gap-3 mb-8">
-              <button onClick={() => doAction('href:/visa-types#booking')} className="btn-primary px-8 py-4 rounded-xl font-black text-lg flex items-center gap-2 shadow-[0_10px_30px_-8px_rgba(204,0,0,0.7)]">
-                <Plane className="w-6 h-6" />{lang === 'de' ? 'Beratung buchen' : 'احجز استشارة'}<ArrowRight className={`w-5 h-5 ${lang === 'ar' ? 'rotate-180' : ''}`} />
+              <button onClick={() => doAction(hero?.cta1Action || DEFAULT_HOME_HERO.cta1Action)} className="btn-primary px-8 py-4 rounded-xl font-black text-lg flex items-center gap-2 shadow-[0_10px_30px_-8px_rgba(204,0,0,0.7)]">
+                <Plane className="w-6 h-6" />{hero?.cta1Label || (lang === 'de' ? 'Beratung buchen' : DEFAULT_HOME_HERO.cta1Label)}<ArrowRight className={`w-5 h-5 ${lang === 'ar' ? 'rotate-180' : ''}`} />
               </button>
-              <button onClick={() => doAction('goto:courses')} className="px-6 py-4 rounded-xl bg-transparent border-2 border-white/50 text-white font-bold flex items-center gap-2 hover:bg-white/10 hover:border-white transition">
-                <GraduationCap className="w-5 h-5" />{lang === 'de' ? 'Kurse ansehen' : 'تصفح الكورسات'}
+              <button onClick={() => doAction(hero?.cta2Action || DEFAULT_HOME_HERO.cta2Action)} className="px-6 py-4 rounded-xl bg-transparent border-2 border-white/50 text-white font-bold flex items-center gap-2 hover:bg-white/10 hover:border-white transition">
+                <GraduationCap className="w-5 h-5" />{hero?.cta2Label || (lang === 'de' ? 'Kurse ansehen' : DEFAULT_HOME_HERO.cta2Label)}
               </button>
             </div>
             {/* Trust chips */}
@@ -270,22 +278,18 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
       <section className="bg-white relative -mt-16 z-20 pb-16">
         <div className="container mx-auto px-4">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {[
-              { icon: BookOpen, color: '#CC0000', title: lang === 'de' ? 'Deutschkurse A1–C2' : 'كورسات اللغة الألمانية', desc: lang === 'de' ? 'Alle Niveaus — online, kleine Gruppen, flexible Zeiten.' : 'من A1 حتى C2 — أونلاين، مجموعات صغيرة وجدول مرن.', action: 'goto:courses', cta: lang === 'de' ? 'Kurse ansehen' : 'تصفح الكورسات' },
-              { icon: Briefcase, color: '#2C5F9E', title: 'Ausbildung & Weiterbildung', desc: lang === 'de' ? 'Vom Sprachkurs zum Ausbildungsvertrag in Deutschland.' : 'من كورس اللغة إلى عقد تدريب مهني في ألمانيا.', action: 'goto:vocational', cta: lang === 'de' ? 'Berufe entdecken' : 'اكتشف المهن' },
-              { icon: Plane, color: '#B8860B', title: lang === 'de' ? 'Studien- & Reiseberatung' : 'استشارات الدراسة والسفر', desc: lang === 'de' ? 'Visum, Zulassung und Unterlagen — persönlich beraten.' : 'فيزا، قبول جامعي، وتجهيز الأوراق — باستشارة شخصية.', action: 'goto:travel', cta: lang === 'de' ? 'Beratung buchen' : 'احجز استشارة' },
-              { icon: Building2, color: '#1A1A1A', title: lang === 'de' ? 'Vorbereitung auf die Arbeit' : 'التحضير للعمل في ألمانيا', desc: lang === 'de' ? 'Bewerbung und Vorbereitung auf den deutschen Arbeitsmarkt.' : 'السيرة الذاتية، التقديم، والاستعداد لسوق العمل الألماني.', action: 'href:/visa-types#booking', cta: lang === 'de' ? 'Mehr erfahren' : 'اعرف أكثر' },
-            ].map((s, i) => {
-              const Ic = s.icon
+            {(services.items || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0)).map((s, i) => {
+              const Ic = getIcon(s.icon)
+              const color = s.color || '#CC0000'
               return (
-                <Card key={i} className="card-hover bg-white shadow-xl border-t-4 group cursor-pointer" style={{ borderTopColor: s.color }} onClick={() => doAction(s.action)}>
+                <Card key={s.id || i} className="card-hover bg-white shadow-xl border-t-4 group cursor-pointer" style={{ borderTopColor: color }} onClick={() => doAction(s.action)}>
                   <CardContent className="p-6">
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110" style={{ background: `${s.color}12` }}>
-                      <Ic className="w-7 h-7" style={{ color: s.color }} />
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110" style={{ background: `${color}12` }}>
+                      <Ic className="w-7 h-7" style={{ color }} />
                     </div>
-                    <h3 className="text-lg font-black mb-1.5">{s.title}</h3>
-                    <p className="text-sm text-neutral-600 leading-relaxed mb-4">{s.desc}</p>
-                    <span className="text-sm font-bold inline-flex items-center gap-1 group-hover:gap-2 transition-all" style={{ color: s.color }}>{s.cta}<ArrowRight className={`w-3.5 h-3.5 ${lang === 'ar' ? 'rotate-180' : ''}`} /></span>
+                    <h3 className="text-lg font-black mb-1.5">{lang === 'de' ? (s.title_de || s.title_ar) : s.title_ar}</h3>
+                    <p className="text-sm text-neutral-600 leading-relaxed mb-4">{lang === 'de' ? (s.desc_de || s.desc_ar) : s.desc_ar}</p>
+                    <span className="text-sm font-bold inline-flex items-center gap-1 group-hover:gap-2 transition-all" style={{ color }}>{lang === 'de' ? (s.cta_de || s.cta_ar) : s.cta_ar}<ArrowRight className={`w-3.5 h-3.5 ${lang === 'ar' ? 'rotate-180' : ''}`} /></span>
                   </CardContent>
                 </Card>
               )
@@ -301,33 +305,27 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
           <div className="mb-14">
             <div className="flex items-center gap-3 mb-3">
               <span className="w-10 h-0.5 bg-[#FFCE00] inline-block" />
-              <span className="text-[#FFCE00] text-sm font-bold tracking-wide">{lang === 'de' ? 'Schritt für Schritt' : 'الطريق خطوة بخطوة'}</span>
+              <span className="text-[#FFCE00] text-sm font-bold tracking-wide">{lang === 'de' ? (journey.label_de || journey.label_ar) : journey.label_ar}</span>
             </div>
-            <h2 className="text-3xl md:text-5xl font-black mb-3 leading-tight">{lang === 'de' ? 'Wie beginnt deine Reise?' : 'كيف تبدأ رحلتك من هون؟'}</h2>
-            <p className="text-white/60 text-lg">{lang === 'de' ? 'Fünf klare Schritte — du weißt immer genau, wo du stehst.' : 'خمس خطوات واضحة — تعرف بالضبط وين حالك بأي لحظة.'}</p>
+            <h2 className="text-3xl md:text-5xl font-black mb-3 leading-tight">{lang === 'de' ? (journey.title_de || journey.title_ar) : journey.title_ar}</h2>
+            <p className="text-white/60 text-lg">{lang === 'de' ? (journey.subtitle_de || journey.subtitle_ar) : journey.subtitle_ar}</p>
           </div>
           <div className="relative">
             {/* connecting line (desktop) */}
             <div className="hidden md:block absolute top-7 right-[10%] left-[10%] h-px bg-white/20" />
             <div className="grid grid-cols-2 md:grid-cols-5 gap-x-4 gap-y-10">
-              {[
-                { n: lang === 'de' ? '1' : '١', title: lang === 'de' ? 'Einstufungstest' : 'اختبار تحديد المستوى', desc: lang === 'de' ? 'Online.' : 'أونلاين.' },
-                { n: lang === 'de' ? '2' : '٢', title: lang === 'de' ? 'Passender Kurs' : 'تسجيل بالكورس المناسب', desc: lang === 'de' ? 'Kleine Gruppen, flexibel — nur online.' : 'مجموعات صغيرة، جدول مرن — أونلاين فقط.' },
-                { n: lang === 'de' ? '3' : '٣', title: lang === 'de' ? 'Lernen & Betreuung' : 'دراسة ومتابعة', desc: lang === 'de' ? 'Persönliche Betreuung.' : 'متابعة فردية.' },
-                { n: lang === 'de' ? '4' : '٤', title: lang === 'de' ? 'Prüfungsvorbereitung' : 'التحضير للامتحان الرسمي', desc: lang === 'de' ? 'Wir machen dich fit für die offizielle Sprachprüfung.' : 'نجهّزك بالكامل لتقديم امتحان اللغة والحصول على شهادتك.' },
-                { n: lang === 'de' ? '5' : '٥', title: lang === 'de' ? 'Reiseberatung' : 'استشارة السفر', desc: lang === 'de' ? 'Visum, Ausbildung oder Zulassung.' : 'فيزا، Ausbildung، أو قبول جامعي.' },
-              ].map((st, i) => (
-                <div key={i} className="text-center relative">
-                  <div className="w-14 h-14 rounded-full bg-[#FFF8E7] text-[#1A1A1A] font-black text-xl flex items-center justify-center mx-auto mb-4 relative z-10 shadow-[0_0_0_6px_rgba(255,206,0,0.12)]">{st.n}</div>
-                  <h3 className="font-black text-base mb-1.5">{st.title}</h3>
-                  <p className="text-white/55 text-xs leading-relaxed max-w-[180px] mx-auto">{st.desc}</p>
+              {(journey.steps || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0)).map((st, i) => (
+                <div key={st.id || i} className="text-center relative">
+                  <div className="w-14 h-14 rounded-full bg-[#FFF8E7] text-[#1A1A1A] font-black text-xl flex items-center justify-center mx-auto mb-4 relative z-10 shadow-[0_0_0_6px_rgba(255,206,0,0.12)]">{lang === 'de' ? (i + 1) : (AR_NUMS[i] || i + 1)}</div>
+                  <h3 className="font-black text-base mb-1.5">{lang === 'de' ? (st.title_de || st.title_ar) : st.title_ar}</h3>
+                  <p className="text-white/55 text-xs leading-relaxed max-w-[180px] mx-auto">{lang === 'de' ? (st.desc_de || st.desc_ar) : st.desc_ar}</p>
                 </div>
               ))}
             </div>
           </div>
           <div className="text-center mt-14">
-            <button onClick={() => doAction('goto:contact')} className="btn-gold px-8 py-4 rounded-xl font-black text-base inline-flex items-center gap-2">
-              <ClipboardCheck className="w-5 h-5" />{lang === 'de' ? 'Mit Schritt 1 starten' : 'ابدأ بالخطوة الأولى'}
+            <button onClick={() => doAction(journey.ctaAction || 'goto:contact')} className="btn-gold px-8 py-4 rounded-xl font-black text-base inline-flex items-center gap-2">
+              <ClipboardCheck className="w-5 h-5" />{lang === 'de' ? (journey.ctaLabel_de || journey.ctaLabel_ar) : journey.ctaLabel_ar}
             </button>
           </div>
         </div>
