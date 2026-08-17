@@ -129,14 +129,20 @@ function App() {
         return
       }
 
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
       setNavOpen(false)
     }
     window.addEventListener('ddh-navigate', onNav)
     return () => window.removeEventListener('ddh-navigate', onNav)
   }, [user])
 
-  const goto = (p) => { setPage(p); setNavOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  const goto = (p) => {
+    setPage(p)
+    setNavOpen(false)
+    // 🚀 Instant jump to top on page change (smooth-scroll from deep positions is janky on mobile
+    //    and can stop mid-way while the new page is still rendering)
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }
   const logout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
     setUser(null); goto('home')
@@ -160,6 +166,8 @@ function App() {
       <Header t={t} lang={lang} setLang={setLang} page={page} goto={goto} user={user} navOpen={navOpen} setNavOpen={setNavOpen} setAuthMode={setAuthMode} logout={logout} flags={flags} />
       <main id="main-content" className="pt-20">
         <ErrorBoundary>
+          {/* key={page} re-mounts the wrapper → plays a light enter animation on every page change */}
+          <div key={page} className="page-enter">
           {page === 'home' && <Home t={t} lang={lang} goto={goto} setAuthMode={setAuthMode} user={user} flags={flags} />}
           {page === 'courses' && <Courses t={t} lang={lang} user={user} setAuthMode={setAuthMode} />}
           {page === 'vocational' && <Vocational t={t} lang={lang} user={user} />}
@@ -170,6 +178,7 @@ function App() {
           {page === 'admin' && (user?.role === 'super_admin' ? <AdminPanel user={user} /> : <AccessDenied />)}
           {page === 'manager' && (['super_admin','manager'].includes(user?.role) ? <ManagerPanel user={user} /> : <AccessDenied />)}
           {page === 'teacher' && (['super_admin','teacher'].includes(user?.role) ? <TeacherPanel user={user} /> : <AccessDenied />)}
+          </div>
         </ErrorBoundary>
       </main>
       <Footer t={t} lang={lang} goto={goto} flags={flags} />
