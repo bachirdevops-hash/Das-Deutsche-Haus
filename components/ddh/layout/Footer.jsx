@@ -51,7 +51,7 @@ export function Footer({ t, lang, goto, flags = {} }) {
         <div>
           <h4 className="font-bold mb-3">{t.contact.title}</h4>
           <ul className="space-y-2 text-sm text-white/70">
-            <li className="flex items-center gap-2"><MapPin className="w-4 h-4" />{lang === 'ar' ? 'دمشق، المزة' : 'Damaskus, Mazzeh'}</li>
+            <li className="flex items-center gap-2"><MapPin className="w-4 h-4" />{lang === 'ar' ? 'قيد التجهيز — دمشق، المزة' : 'In Vorbereitung — Damaskus, Al-Mazza'}</li>
             <li className="flex items-center gap-2">
               <Phone className="w-4 h-4" />
               <a href={`tel:${(process.env.NEXT_PUBLIC_PHONE || '+49 1525 4196668').replace(/\s/g, '')}`} className="hover:text-[#FFCE00]" dir="ltr">
