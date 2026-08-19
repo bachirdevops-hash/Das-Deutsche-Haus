@@ -293,7 +293,7 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
             </div>
             {/* Trust chips */}
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/85">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#FFCE00]" />{lang === 'de' ? `${new Date().getFullYear() - 2018}+ Jahre Erfahrung` : `${new Date().getFullYear() - 2018}+ سنوات خبرة`}</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#FFCE00]" />{lang === 'de' ? `${new Date().getFullYear() - 2018}+ Jahre Erfahrung` : `${new Date().getFullYear() - 2023}+ سنوات خبرة`}</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#FFCE00]" />{lang === 'de' ? 'Live-Onlinekurse' : 'كورسات أونلاين مباشرة'}</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#FFCE00]" />{lang === 'de' ? 'Begleitung bis Deutschland' : 'مرافقة كاملة حتى ألمانيا'}</span>
             </div>
@@ -368,7 +368,7 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
             <div className="order-2 lg:order-1">
               <Badge className="bg-[#FFCE00] text-[#1A1A1A] hover:bg-[#FFCE00] mb-3 px-3 py-1 font-bold"><Sparkles className="w-3.5 h-3.5 me-1" />عن المعهد</Badge>
               <h2 className="text-3xl md:text-4xl font-black mb-4 leading-tight">{about?.storyTitle || 'قصتنا — تمكين الشباب السوري'}</h2>
-              <p className="text-neutral-700 leading-loose mb-6 line-clamp-6">{about?.story || 'تأسس Das Deutsche Haus عام 2018 على يد فريق من الأكاديميين الألمان والسوريين بهدف بناء جسر تعليمي وثقافي حقيقي بين سوريا وألمانيا.'}</p>
+              <p className="text-neutral-700 leading-loose mb-6 line-clamp-6">{about?.story || 'تأسس Das Deutsche Haus عام 2023 على يد فريق من الأكاديميين الألمان والسوريين بهدف بناء جسر تعليمي وثقافي حقيقي بين سوريا وألمانيا.'}</p>
               {/* Inline stats */}
               <div className="grid grid-cols-3 gap-3 mb-6">
                 {statsItems.slice(0, 3).map(s => (
@@ -390,7 +390,7 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
               </div>
               {/* Floating badge */}
               <div className="absolute -bottom-6 start-6 bg-[#CC0000] text-white rounded-2xl px-5 py-4 shadow-2xl">
-                <div className="text-3xl font-black">{new Date().getFullYear() - 2018}+</div>
+                <div className="text-3xl font-black">{new Date().getFullYear() - 2023}+</div>
                 <div className="text-xs font-semibold">سنوات من التميّز</div>
               </div>
             </div>
@@ -512,9 +512,9 @@ function Home({ t, lang, goto, setAuthMode, user, flags = {} }) {
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { name: 'سارة محمد · Sara M.', role: lang === 'ar' ? 'طالبة طب — برلين' : 'Medizinstudentin — Berlin', q_ar: 'بدأت من A1 ووصلت إلى C1 خلال 14 شهراً. الآن أدرس الطب في برلين.', q_de: 'Von A1 zu C1 in 14 Monaten. Jetzt studiere ich in Berlin.' },
-              { name: 'أحمد · Ahmad K.', role: lang === 'ar' ? 'متدرب — Siemens' : 'Auszubildender — Siemens', q_ar: 'حصلت على عقد Ausbildung مع Siemens بفضل الإعداد الممتاز في المعهد.', q_de: 'Ich bekam einen Ausbildungsvertrag bei Siemens.' },
-              { name: 'لينا · Lina H.', role: lang === 'ar' ? 'ممرضة — Charité' : 'Krankenpflegerin — Charité', q_ar: 'كورس B2 للتمريض غيّر حياتي — الآن أعمل في أكبر مستشفى ألماني.', q_de: 'Der B2-Pflegekurs hat mein Leben verändert.' },
+              { name: 'سارة محمد · Sara M.🇸🇾 سوريا.', role: lang === 'ar' ? 'طالبة طب — برلين' : 'Medizinstudentin — Berlin', q_ar: 'أكثر شيء أعجبني هو أنني لم أتعلم اللغة بطريقة نظرية فقط، بل بدأت أفهم كيف أستخدمها في حياتي اليومية.', q_de: 'Was mir am meisten gefallen hat, ist, dass ich Deutsch nicht nur theoretisch gelernt habe, sondern auch verstanden habe, wie ich die Sprache im Alltag anwenden kann.' },
+              { name: 'أحمد · Ahmad K.مصر ,Ägypten', role: lang === 'ar' ? 'متدرب ' : 'Auszubildender', q_ar: 'كنت أبحث عن فرصة Ausbildung مناسبة، ومن خلال الاستشارة في Das Deutsche Haus تعرفت على الفرص المتاحة والمتطلبات. وساعدتني الأكاديمية في الحصول على فرصة Ausbildung مناسبة', q_de: 'Ich war auf der Suche nach einer passenden Ausbildung. Durch die Beratung bei Das Deutsche Haus habe ich die verfügbaren Möglichkeiten und Voraussetzungen kennengelernt. Die Akademie hat mich dabei unterstützt, eine passende Ausbildungsstelle zu finden.' },
+              { name: 'لينا · Lina H.المغرب,Marokko', role: lang === 'ar' ? 'ممرضة ' : 'Krankenpflegerin ', q_ar: 'قبل الاستشارة لم أكن أعرف أي طريق يناسبني. خلال الجلسة حصلت على توجيه واضح حول Ausbildung المناسبة لي، وعرفت كيف أبدأ بشكل صحيح.', q_de: 'Vor der Beratung wusste ich nicht genau, welcher Weg zu mir passt. Im Gespräch habe ich eine klare Orientierung zu passenden Ausbildungsmöglichkeiten bekommen und erfahren, wie ich richtig starten kann' },
             ].map((tt, i) => (
               <Card key={i} className="card-hover bg-gradient-to-br from-white to-neutral-50 relative">
                 <CardContent className="p-7">
