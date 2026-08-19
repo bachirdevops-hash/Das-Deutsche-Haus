@@ -3,8 +3,8 @@
 import requests
 
 BASE_URL = "http://localhost:3000/api"
-ADMIN_EMAIL = "bachir.devops@gmail.com"
-ADMIN_PASSWORD = "@26042026Admin"
+ADMIN_EMAIL = ""
+ADMIN_PASSWORD = ""
 
 # Login
 response = requests.post(f"{BASE_URL}/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD}, timeout=20)
