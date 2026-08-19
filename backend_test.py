@@ -14,8 +14,8 @@ from typing import Dict, Any, Optional
 
 # ⛔ ABSOLUTE RULE: Use localhost:3000 for EVERY request
 BASE_URL = "http://localhost:3000/api"
-ADMIN_EMAIL = "bachir.devops@gmail.com"
-ADMIN_PASSWORD = "@26042026Admin"
+ADMIN_EMAIL = "ADMIN_EMAIL"
+ADMIN_PASSWORD = "ADMIN_PASSWORT"
 
 # Test tracking
 tests_passed = 0
